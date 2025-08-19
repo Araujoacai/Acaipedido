@@ -193,7 +193,7 @@
         const valor = document.getElementById("valor").innerText;
         const orderId = 'ACAI-' + Date.now().toString().slice(-6);
         try { await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: selecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); } catch (e) { console.error("Erro ao salvar venda: ", e); showModal("Ocorreu um erro ao salvar seu pedido."); return; }
-        const numero = "551499196607";
+        const numero = "5514991962607";
         const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
     }
