@@ -14,202 +14,404 @@
       object-fit: contain; 
       margin-right: 8px; 
     }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    .tab-active {
+        border-color: #9333ea;
+        background-color: #f3e8ff;
+        color: #9333ea;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800">
+<body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800 font-sans">
 
-  <div class="bg-white/95 shadow-2xl rounded-3xl p-6 w-full max-w-md mt-4 mb-32 backdrop-blur-sm border border-purple-200">
+  <!-- Botão de Login Admin -->
+  <button id="admin-login-button" class="fixed bottom-20 right-4 bg-purple-700 text-white p-3 rounded-full shadow-lg z-40 hover:bg-purple-800 transition">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>
+  </button>
+  <button id="admin-logout-button" class="fixed bottom-20 right-4 bg-red-500 text-white p-3 rounded-full shadow-lg z-40 hover:bg-red-600 transition hidden">
+     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/><path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/></svg>
+  </button>
+
+  <!-- Cardápio Principal -->
+  <div id="menu-container" class="bg-white/95 shadow-2xl rounded-3xl p-6 w-full max-w-md mt-4 mb-32 backdrop-blur-sm border border-purple-200">
     <h1 class="text-3xl font-extrabold text-center text-purple-800 mb-3">🍧 Cardápio de Açaí</h1>
     <p class="text-center font-bold text-pink-600 tracking-wide">ACOMPANHAMENTOS</p>
     <p class="text-center text-gray-700 mb-6">3 por copo | Adicional R$3</p>
-
-    <!-- Tamanho do copo -->
+    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2><div id="tamanhos-container" class="flex flex-col sm:flex-row gap-3"><p class="text-gray-500">A carregar tamanhos...</p></div></div>
+    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center"><img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img"> Quantidade</h2><input type="number" id="quantidade" min="1" value="1" class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400"></div>
+    <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥭 Frutas</h2><div id="frutas-container" class="grid grid-cols-2 gap-3"><p class="text-gray-500 col-span-2">A carregar frutas...</p></div></div>
+    <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🍫 Cremes</h2><div id="cremes-container" class="grid grid-cols-1 gap-2"><p class="text-gray-500">A carregar cremes...</p></div></div>
+    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">✨ Outros</h2><div id="outros-container" class="grid grid-cols-1 gap-2 sm:grid-cols-2"><p class="text-gray-500 col-span-2">A carregar outros itens...</p></div></div>
+    
+    <!-- Campo Nome do Cliente -->
     <div class="mb-6">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <label class="flex items-center justify-between bg-purple-100 px-4 py-3 rounded-2xl shadow cursor-pointer hover:bg-purple-200 transition">
-          <div>
-            <span class="font-medium text-gray-800">300ml</span>
-            <span class="ml-3 text-sm text-gray-600">R$17</span>
-          </div>
-          <input type="radio" name="tamanho" value="300ml" class="accent-pink-500">
-        </label>
-        <label class="flex items-center justify-between bg-purple-100 px-4 py-3 rounded-2xl shadow cursor-pointer hover:bg-purple-200 transition">
-          <div>
-            <span class="font-medium text-gray-800">500ml</span>
-            <span class="ml-3 text-sm text-gray-600">R$21</span>
-          </div>
-          <input type="radio" name="tamanho" value="500ml" class="accent-pink-500">
-        </label>
-      </div>
+      <h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2>
+      <input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400">
     </div>
 
-    <!-- Quantidade -->
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center">
-        <img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img">
-        Quantidade
-      </h2>
-      <input type="number" id="quantidade" min="1" value="1" 
-        class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400">
-    </div>
-
-    <!-- Frutas -->
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2">🥭 Frutas</h2>
-      <div class="grid grid-cols-2 gap-3">
-        <label class="flex items-center bg-pink-100 px-3 py-3 rounded-xl shadow hover:bg-pink-200 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/831/831896.png" alt="Banana" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Banana" class="mr-2 accent-purple-600"> Banana
-        </label>
-        <label class="flex items-center bg-pink-100 px-3 py-3 rounded-xl shadow hover:bg-pink-200 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/415/415740.png" alt="Morango" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Morango" class="mr-2 accent-purple-600"> Morango
-        </label>
-        <label class="flex items-center bg-pink-100 px-3 py-3 rounded-xl shadow hover:bg-pink-200 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/1514/1514997.png" alt="Uva" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Uva" class="mr-2 accent-purple-600"> Uva
-        </label>
-      </div>
-    </div>
-
-    <!-- Cremes -->
-    <div class="mb-4">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2">🍫 Cremes</h2>
-      <div class="grid grid-cols-1 gap-2">
-        <label class="flex items-center bg-purple-100 px-3 py-2 rounded-xl shadow hover:bg-purple-200 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/5016/5016526.png" alt="Leite condensado" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Leite condensado" class="mr-2 accent-pink-600"> Leite condensado
-        </label>
-        <label class="flex items-center bg-purple-100 px-3 py-2 rounded-xl shadow hover:bg-purple-200 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/18253/18253366.png" alt="Creme de ninho" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Creme de ninho" class="mr-2 accent-pink-600"> Creme de ninho
-        </label>
-        <label class="flex items-center bg-purple-100 px-3 py-2 rounded-xl shadow hover:bg-purple-200 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/6842/6842964.png" alt="Creme de avelã" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Creme de avelã" class="mr-2 accent-pink-600"> Creme de avelã
-        </label>
-      </div>
-    </div>
-
-    <!-- Outros -->
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2">✨ Outros</h2>
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/10684/10684346.png" alt="Granola" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Granola" class="mr-2 accent-purple-600"> Granola
-        </label>
-        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/10775/10775616.png" alt="Chocolate granulado" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Chocolate granulado" class="mr-2 accent-purple-600"> Chocolate granulado
-        </label>
-        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/7061/7061942.png" alt="KitKat" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="KitKat" class="mr-2 accent-purple-600"> KitKat
-        </label>
-        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/5574/5574469.png" alt="Leite em pó Ninho" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Leite em pó Ninho" class="mr-2 accent-purple-600"> Leite em pó Ninho
-        </label>
-        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/1017/1017593.png" alt="Confete" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Confete" class="mr-2 accent-purple-600"> Confete
-        </label>
-        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
-          <img src="https://cdn-icons-png.flaticon.com/128/10623/10623122.png" alt="Paçoca" class="card-img" onerror="this.style.display='none'">
-          <input type="checkbox" value="Paçoca" class="mr-2 accent-purple-600"> Paçoca
-        </label>
-      </div>
-    </div>
-
-    <!-- Observações -->
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2>
-      <textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado, sem granola..." 
-        class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea>
-    </div>
+    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2><textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea></div>
   </div>
   
-  <!-- Modal for alerts -->
-  <div id="alert-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-      <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="alert-box">
-          <p id="alert-message" class="text-lg text-gray-800 mb-6"></p>
-          <button onclick="closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">
-              OK
-          </button>
-      </div>
-  </div>
+  <!-- Painel Admin (escondido por padrão) -->
+  <div id="admin-panel" class="hidden w-full max-w-5xl mx-auto p-4"></div>
+
+  <!-- Modal Genérico -->
+  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"></div>
 
   <!-- Barra fixa WhatsApp -->
-  <div class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-500 to-purple-700 text-white shadow-xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl">
+  <div id="whatsapp-bar" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-500 to-purple-700 text-white shadow-xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl">
     <h2 class="text-lg font-bold">💰 Total: <span id="valor">R$0,00</span></h2>
-    <button onclick="enviarPedido()" 
-      class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">
-      📲 WhatsApp
-    </button>
+    <button onclick="enviarPedido()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">📲 WhatsApp</button>
   </div>
 
-  <script>
-    const alertModal = document.getElementById('alert-modal');
-    const alertBox = document.getElementById('alert-box');
-    const alertMessage = document.getElementById('alert-message');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-    function showModal(message) {
-        alertMessage.textContent = message;
-        alertModal.classList.remove('hidden');
-        setTimeout(() => {
-            alertBox.classList.remove('scale-95', 'opacity-0');
-        }, 10);
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
+      authDomain: "salvapropagandas.firebaseapp.com",
+      projectId: "salvapropagandas",
+      storageBucket: "salvapropagandas.appspot.com",
+      messagingSenderId: "285635693052",
+      appId: "1:285635693052:web:260476698696d303be0a79"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let produtos = [];
+    let precosBase = {};
+    let unsubscribeVendas;
+
+    const menuContainer = document.getElementById('menu-container');
+    const adminPanel = document.getElementById('admin-panel');
+    const whatsappBar = document.getElementById('whatsapp-bar');
+    const adminLoginBtn = document.getElementById('admin-login-button');
+    const adminLogoutBtn = document.getElementById('admin-logout-button');
+    const modalContainer = document.getElementById('modal-container');
+
+    function showModal(content, onOpen = () => {}) {
+        modalContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${content}</div>`;
+        modalContainer.classList.remove('hidden');
+        setTimeout(() => { document.getElementById('modal-box').classList.remove('scale-95', 'opacity-0'); onOpen(); }, 10);
     }
 
     function closeModal() {
-        alertBox.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            alertModal.classList.add('hidden');
-        }, 200);
+        const modalBox = document.getElementById('modal-box');
+        if (modalBox) {
+            modalBox.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => { modalContainer.classList.add('hidden'); modalContainer.innerHTML = ''; }, 200);
+        }
+    }
+
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            adminLoginBtn.classList.add('hidden');
+            adminLogoutBtn.classList.remove('hidden');
+            menuContainer.classList.add('hidden');
+            whatsappBar.classList.add('hidden');
+            adminPanel.classList.remove('hidden');
+            renderAdminPanel();
+        } else {
+            adminLoginBtn.classList.remove('hidden');
+            adminLogoutBtn.classList.add('hidden');
+            menuContainer.classList.remove('hidden');
+            whatsappBar.classList.remove('hidden');
+            adminPanel.classList.add('hidden');
+            if (unsubscribeVendas) unsubscribeVendas();
+        }
+    });
+
+    adminLoginBtn.addEventListener('click', () => {
+        const loginFormHTML = `
+            <h3 class="text-xl font-bold mb-4">Login Admin</h3>
+            <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4">
+            <button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        showModal(loginFormHTML, () => {
+             document.getElementById('login-submit').addEventListener('click', async () => {
+                try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); closeModal(); } catch (error) { console.error("Erro de login:", error); alert("Email ou senha inválidos."); }
+            });
+        });
+    });
+    
+    adminLogoutBtn.addEventListener('click', () => signOut(auth));
+
+    function renderMenu() {
+        const containers = { tamanho: document.getElementById('tamanhos-container'), fruta: document.getElementById('frutas-container'), creme: document.getElementById('cremes-container'), outro: document.getElementById('outros-container') };
+        Object.values(containers).forEach(c => c.innerHTML = '');
+        precosBase = {};
+        if (produtos.length === 0) { Object.values(containers).forEach(c => c.innerHTML = '<p class="text-red-500 text-sm col-span-2">Nenhum item. Faça login como admin para adicionar produtos.</p>'); return; }
+        produtos.forEach(p => {
+            if (p.category === 'tamanho') {
+                precosBase[p.name] = p.price;
+                containers.tamanho.innerHTML += `<label class="flex items-center justify-between bg-purple-100 px-4 py-3 rounded-2xl shadow cursor-pointer hover:bg-purple-200 transition"><div><span class="font-medium text-gray-800">${p.name}</span><span class="ml-3 text-sm text-gray-600">R$${p.price.toFixed(2)}</span></div><input type="radio" name="tamanho" value="${p.name}" class="accent-pink-500"></label>`;
+            } else {
+                const bgColor = p.category === 'fruta' ? 'bg-pink-100 hover:bg-pink-200' : p.category === 'creme' ? 'bg-purple-100 hover:bg-purple-200' : 'bg-violet-200 hover:bg-violet-300';
+                const accentColor = p.category === 'fruta' ? 'accent-purple-600' : 'accent-pink-600';
+                if(containers[p.category]) { containers[p.category].innerHTML += `<label class="flex items-center ${bgColor} px-3 py-2 rounded-xl shadow cursor-pointer"><img src="${p.iconUrl}" alt="${p.name}" class="card-img" onerror="this.style.display='none'"><span class="flex-grow">${p.name}</span><input type="checkbox" value="${p.name}" class="mr-2 ${accentColor}"></label>`; }
+            }
+        });
+        document.querySelectorAll('input, textarea').forEach(el => { el.addEventListener("change", calcularValor); el.addEventListener("input", calcularValor); });
     }
 
     function calcularValor() {
-      const tamanho = document.querySelector('input[name="tamanho"]:checked');
-      const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
-      const selecionados = document.querySelectorAll('input[type=checkbox]:checked').length;
-
-      if (!tamanho || quantidade <= 0) {
-        document.getElementById("valor").innerText = "R$0,00";
-        return;
-      }
-
-      let precoBase = tamanho.value === "300ml" ? 17 : 21;
-      let adicionais = selecionados > 3 ? (selecionados - 3) * 3 : 0;
-      let total = (precoBase + adicionais) * quantidade;
-
-      document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(".", ",");
+        const tamanhoEl = document.querySelector('input[name="tamanho"]:checked');
+        if (!tamanhoEl) { document.getElementById("valor").innerText = "R$0,00"; return; }
+        const tamanho = tamanhoEl.value;
+        const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
+        const selecionados = document.querySelectorAll('input[type=checkbox]:checked').length;
+        let precoBase = precosBase[tamanho] || 0;
+        let adicionais = selecionados > 3 ? (selecionados - 3) * 3 : 0;
+        let total = (precoBase + adicionais) * quantidade;
+        document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(",", ".");
     }
 
-    function enviarPedido() {
-      const tamanho = document.querySelector('input[name="tamanho"]:checked');
-      if (!tamanho) { showModal("Por favor, selecione o tamanho do copo!"); return; }
+    async function enviarPedido() {
+        const tamanhoEl = document.querySelector('input[name="tamanho"]:checked');
+        if (!tamanhoEl) { showModal("Por favor, selecione o tamanho do copo!"); return; }
+        const quantidade = document.getElementById("quantidade").value;
+        if (quantidade < 1) { showModal("Por favor, informe a quantidade!"); return; }
+        const nomeCliente = document.getElementById('nome-cliente').value.trim();
+        if (!nomeCliente) { showModal("Por favor, digite seu nome!"); return; }
+        const selecionados = Array.from(document.querySelectorAll('input[type=checkbox]:checked')).map(el => el.value);
+        if (selecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento!"); return; }
+        const observacoes = document.getElementById("observacoes").value;
+        const valor = document.getElementById("valor").innerText;
+        const orderId = 'ACAI-' + Date.now().toString().slice(-6);
 
-      const quantidade = document.getElementById("quantidade").value;
-      if (quantidade < 1) { showModal("Por favor, informe a quantidade!"); return; }
+        try { 
+            await addDoc(collection(db, "vendas"), { 
+                orderId: orderId,
+                nomeCliente: nomeCliente,
+                tamanho: tamanhoEl.value, 
+                quantidade: parseInt(quantidade), 
+                acompanhamentos: selecionados, 
+                observacoes: observacoes || "Nenhuma", 
+                total: valor, 
+                status: "pendente", 
+                timestamp: serverTimestamp() 
+            }); 
+        } catch (e) { 
+            console.error("Erro ao salvar venda: ", e); 
+            showModal("Ocorreu um erro ao salvar seu pedido. Tente novamente."); 
+            return; 
+        }
+        const numero = "551499196607";
+        const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
+        window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+    window.enviarPedido = enviarPedido;
+    window.closeModal = closeModal;
 
-      const selecionados = [];
-      document.querySelectorAll('input[type=checkbox]:checked').forEach(el => selecionados.push(el.value));
-      if (selecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento!"); return; }
+    function renderAdminPanel() {
+        adminPanel.innerHTML = `
+            <h2 class="text-3xl font-bold text-center text-purple-800 mb-6">Painel de Administração</h2>
+            <div class="flex border-b mb-4">
+                <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active">Gerenciar Produtos</button>
+                <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Relatório de Vendas</button>
+            </div>
+            <div id="content-produtos"></div>
+            <div id="content-vendas" class="hidden"></div>
+        `;
+        renderProdutosAdmin();
+        renderVendasAdmin();
+        
+        const tabProdutos = document.getElementById('tab-produtos');
+        const tabVendas = document.getElementById('tab-vendas');
+        const contentProdutos = document.getElementById('content-produtos');
+        const contentVendas = document.getElementById('content-vendas');
 
-      const observacoes = document.getElementById("observacoes").value;
-      const valor = document.getElementById("valor").innerText;
-      const numero = "5514991962607"; // Altere para o seu número
-      const msg = `Olá! Quero pedir ${quantidade} copo(s) de açaí ${tamanho.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 Valor Total: ${valor}`;
-      window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
+        tabProdutos.addEventListener('click', () => {
+            tabProdutos.classList.add('tab-active');
+            tabVendas.classList.remove('tab-active');
+            contentProdutos.classList.remove('hidden');
+            contentVendas.classList.add('hidden');
+        });
+        tabVendas.addEventListener('click', () => {
+            tabVendas.classList.add('tab-active');
+            tabProdutos.classList.remove('tab-active');
+            contentVendas.classList.remove('hidden');
+            contentProdutos.classList.add('hidden');
+        });
     }
 
-    document.querySelectorAll('input, textarea').forEach(el => {
-      el.addEventListener("change", calcularValor);
-      el.addEventListener("input", calcularValor);
-    });
+    function renderProdutosAdmin() {
+        document.getElementById('content-produtos').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+               <h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Produto</h3>
+               <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg">
+                   <input type="hidden" id="produto-id"><input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded"><input type="number" id="produto-preco" placeholder="Preço (ex: 17.00)" step="0.01" class="p-2 border rounded"><input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded">
+                   <select id="produto-categoria" class="p-2 border rounded"><option value="tamanho">Tamanho</option><option value="fruta">Fruta</option><option value="creme">Creme</option><option value="outro">Outro</option></select>
+                   <button id="salvar-produto-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Salvar</button>
+               </div>
+               <div id="lista-produtos-admin"></div>
+            </div>`;
+        document.getElementById('salvar-produto-btn').addEventListener('click', salvarProduto);
+        carregarProdutosAdmin();
+    }
+
+    function renderVendasAdmin() {
+        document.getElementById('content-vendas').innerHTML = `
+             <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3>
+                <div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg">
+                    <label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded">
+                    <label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded">
+                    <button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-100"><tr>
+                            <th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Total</th><th class="p-3">Status</th><th class="p-3">Ações</th>
+                        </tr></thead>
+                        <tbody id="vendas-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-right pr-4">
+                    <h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4>
+                </div>
+             </div>`;
+        document.getElementById('gerar-relatorio-btn').addEventListener('click', () => {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+            carregarVendasAdmin(start, end);
+        });
+        carregarVendasAdmin();
+    }
+
+    async function salvarProduto() {
+        const id = document.getElementById('produto-id').value;
+        const produto = { name: document.getElementById('produto-nome').value, price: parseFloat(document.getElementById('produto-preco').value), iconUrl: document.getElementById('produto-icone').value, category: document.getElementById('produto-categoria').value };
+        if (!produto.name || isNaN(produto.price)) { showModal("Nome e Preço são obrigatórios."); return; }
+        try {
+            if (id) { await updateDoc(doc(db, "produtos", id), produto); } else { await addDoc(collection(db, "produtos"), produto); }
+            document.getElementById('produto-id').value = ''; document.getElementById('produto-nome').value = ''; document.getElementById('produto-preco').value = ''; document.getElementById('produto-icone').value = '';
+        } catch (error) { console.error("Erro ao salvar produto:", error); showModal("Não foi possível salvar o produto."); }
+    }
+
+    function carregarProdutosAdmin() {
+        const container = document.getElementById('lista-produtos-admin');
+        onSnapshot(collection(db, "produtos"), (snapshot) => {
+            const produtosPorCategoria = { tamanho: [], fruta: [], creme: [], outro: [] };
+            snapshot.docs.forEach(docSnap => { const p = { id: docSnap.id, ...docSnap.data() }; if(produtosPorCategoria[p.category]) produtosPorCategoria[p.category].push(p); });
+            
+            container.innerHTML = '';
+            for (const categoria in produtosPorCategoria) {
+                container.innerHTML += `<h4 class="text-xl font-medium mt-6 mb-2 capitalize text-purple-600">${categoria}s</h4>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+                produtosPorCategoria[categoria].forEach(p => {
+                    grid.innerHTML += `<div class="border p-3 rounded-lg flex justify-between items-center"><div><p class="font-bold">${p.name}</p><p class="text-sm text-gray-600">R$${p.price.toFixed(2)}</p></div><div><button class="edit-produto-btn p-1 text-blue-500" data-id="${p.id}">✏️</button><button class="delete-produto-btn p-1 text-red-500" data-id="${p.id}">🗑️</button></div></div>`;
+                });
+                container.appendChild(grid);
+            }
+
+            document.querySelectorAll('.edit-produto-btn').forEach(btn => btn.addEventListener('click', (e) => editarProduto(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.delete-produto-btn').forEach(btn => btn.addEventListener('click', (e) => deletarProduto(e.currentTarget.dataset.id)));
+        });
+    }
+    
+    function editarProduto(id) {
+        const p = produtos.find(prod => prod.id === id);
+        if (p) { document.getElementById('produto-id').value = p.id; document.getElementById('produto-nome').value = p.name; document.getElementById('produto-preco').value = p.price; document.getElementById('produto-icone').value = p.iconUrl; document.getElementById('produto-categoria').value = p.category; }
+    }
+
+    function deletarProduto(id) {
+        const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este produto?</p><button id="confirm-delete-produto-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        showModal(confirmationHTML, () => {
+            document.getElementById('confirm-delete-produto-btn').addEventListener('click', async () => {
+                try { await deleteDoc(doc(db, "produtos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir produto:", error); closeModal(); showModal('<p class="text-red-500">Ocorreu um erro.</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); }
+            });
+        });
+    }
+
+    function carregarVendasAdmin(startDate, endDate) {
+        const tableBody = document.getElementById('vendas-table-body');
+        let q = query(collection(db, "vendas"), orderBy("timestamp", "desc"));
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999); // Inclui o dia todo
+            q = query(collection(db, "vendas"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
+        }
+        
+        if (unsubscribeVendas) unsubscribeVendas();
+
+        unsubscribeVendas = onSnapshot(q, (snapshot) => {
+            tableBody.innerHTML = '';
+            let totalVendas = 0;
+
+            if (snapshot.empty) { 
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Nenhuma venda encontrada.</td></tr>';
+                document.getElementById('total-vendas').innerText = 'R$0,00';
+                return; 
+            }
+            
+            snapshot.docs.forEach(docSnap => {
+                const venda = { id: docSnap.id, ...docSnap.data() };
+                const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+                if (!isNaN(valorNumerico)) {
+                    totalVendas += valorNumerico;
+                }
+
+                const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
+                const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
+                tableBody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
+                        <td class="p-3 text-sm">${data}</td>
+                        <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}</td>
+                        <td class="p-3 text-sm">${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${venda.acompanhamentos.join(', ')}</small></td>
+                        <td class="p-3 font-medium">${venda.total}</td>
+                        <td class="p-3 font-semibold ${statusClass} capitalize">${venda.status}</td>
+                        <td class="p-3">
+                            ${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}
+                            <button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button>
+                        </td>
+                    </tr>`;
+            });
+
+            document.getElementById('total-vendas').innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
+
+            document.querySelectorAll('.confirm-venda-btn').forEach(btn => btn.addEventListener('click', e => confirmarVenda(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.delete-venda-btn').forEach(btn => btn.addEventListener('click', e => deletarVenda(e.currentTarget.dataset.id)));
+        });
+    }
+
+    async function confirmarVenda(id) { await updateDoc(doc(db, "vendas", id), { status: 'concluida' }); }
+
+    function deletarVenda(id) {
+        const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir esta venda?</p><button id="confirm-delete-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        showModal(confirmationHTML, () => {
+            document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+                try { await deleteDoc(doc(db, "vendas", id)); closeModal(); } catch (error) { console.error("Erro ao excluir venda:", error); closeModal(); showModal('<p class="text-red-500">Ocorreu um erro.</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); }
+            });
+        });
+    }
+
+    onSnapshot(collection(db, "produtos"), 
+        (snapshot) => {
+            produtos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderMenu();
+            calcularValor();
+        },
+        (error) => {
+            console.error("Erro ao carregar produtos:", error);
+            document.getElementById('menu-container').innerHTML = '<p class="text-red-600 text-center">Não foi possível carregar o cardápio.</p>';
+        }
+    );
   </script>
-
 </body>
 </html>
