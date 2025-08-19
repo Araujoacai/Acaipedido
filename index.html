@@ -200,7 +200,7 @@
 
       const observacoes = document.getElementById("observacoes").value;
       const valor = document.getElementById("valor").innerText;
-      const numero = "551499196607"; // Altere para o seu número
+      const numero = "5514991962607"; // Altere para o seu número
       const msg = `Olá! Quero pedir ${quantidade} copo(s) de açaí ${tamanho.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 Valor Total: ${valor}`;
       window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
     }
