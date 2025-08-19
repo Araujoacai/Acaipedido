@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cardápio Açaí</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { scroll-behavior: smooth; }
+    input[type=checkbox], input[type=radio] { width: 1.4em; height: 1.4em; }
+    .card-img { 
+      width: 24px; 
+      height: 24px; 
+      object-fit: contain; 
+      margin-right: 8px; 
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800">
+
+  <div class="bg-white/95 shadow-2xl rounded-3xl p-6 w-full max-w-md mt-4 mb-32 backdrop-blur-sm border border-purple-200">
+    <h1 class="text-3xl font-extrabold text-center text-purple-800 mb-3">🍧 Cardápio de Açaí</h1>
+    <p class="text-center font-bold text-pink-600 tracking-wide">ACOMPANHAMENTOS</p>
+    <p class="text-center text-gray-700 mb-6">3 por copo | Adicional R$3</p>
+
+    <!-- Tamanho do copo -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <label class="flex items-center justify-between bg-purple-100 px-4 py-3 rounded-2xl shadow cursor-pointer hover:bg-purple-200 transition">
+          <div>
+            <span class="font-medium text-gray-800">300ml</span>
+            <span class="ml-3 text-sm text-gray-600">R$17</span>
+          </div>
+          <input type="radio" name="tamanho" value="300ml" class="accent-pink-500">
+        </label>
+        <label class="flex items-center justify-between bg-purple-100 px-4 py-3 rounded-2xl shadow cursor-pointer hover:bg-purple-200 transition">
+          <div>
+            <span class="font-medium text-gray-800">500ml</span>
+            <span class="ml-3 text-sm text-gray-600">R$21</span>
+          </div>
+          <input type="radio" name="tamanho" value="500ml" class="accent-pink-500">
+        </label>
+      </div>
+    </div>
+
+    <!-- Quantidade -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center">
+        <img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img">
+        Quantidade
+      </h2>
+      <input type="number" id="quantidade" min="1" value="1" 
+        class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400">
+    </div>
+
+    <!-- Frutas -->
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-purple-700 mb-2">🥭 Frutas</h2>
+      <div class="grid grid-cols-2 gap-3">
+        <label class="flex items-center bg-pink-100 px-3 py-3 rounded-xl shadow hover:bg-pink-200 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/831/831896.png" alt="Banana" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Banana" class="mr-2 accent-purple-600"> Banana
+        </label>
+        <label class="flex items-center bg-pink-100 px-3 py-3 rounded-xl shadow hover:bg-pink-200 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/415/415740.png" alt="Morango" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Morango" class="mr-2 accent-purple-600"> Morango
+        </label>
+        <label class="flex items-center bg-pink-100 px-3 py-3 rounded-xl shadow hover:bg-pink-200 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/1514/1514997.png" alt="Uva" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Uva" class="mr-2 accent-purple-600"> Uva
+        </label>
+      </div>
+    </div>
+
+    <!-- Cremes -->
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-purple-700 mb-2">🍫 Cremes</h2>
+      <div class="grid grid-cols-1 gap-2">
+        <label class="flex items-center bg-purple-100 px-3 py-2 rounded-xl shadow hover:bg-purple-200 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/5016/5016526.png" alt="Leite condensado" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Leite condensado" class="mr-2 accent-pink-600"> Leite condensado
+        </label>
+        <label class="flex items-center bg-purple-100 px-3 py-2 rounded-xl shadow hover:bg-purple-200 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/18253/18253366.png" alt="Creme de ninho" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Creme de ninho" class="mr-2 accent-pink-600"> Creme de ninho
+        </label>
+        <label class="flex items-center bg-purple-100 px-3 py-2 rounded-xl shadow hover:bg-purple-200 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/6842/6842964.png" alt="Creme de avelã" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Creme de avelã" class="mr-2 accent-pink-600"> Creme de avelã
+        </label>
+      </div>
+    </div>
+
+    <!-- Outros -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold text-purple-700 mb-2">✨ Outros</h2>
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/10684/10684346.png" alt="Granola" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Granola" class="mr-2 accent-purple-600"> Granola
+        </label>
+        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/10775/10775616.png" alt="Chocolate granulado" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Chocolate granulado" class="mr-2 accent-purple-600"> Chocolate granulado
+        </label>
+        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/7061/7061942.png" alt="KitKat" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="KitKat" class="mr-2 accent-purple-600"> KitKat
+        </label>
+        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/5574/5574469.png" alt="Leite em pó Ninho" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Leite em pó Ninho" class="mr-2 accent-purple-600"> Leite em pó Ninho
+        </label>
+        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/1017/1017593.png" alt="Confete" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Confete" class="mr-2 accent-purple-600"> Confete
+        </label>
+        <label class="flex items-center bg-violet-200 px-3 py-2 rounded-xl shadow hover:bg-violet-300 cursor-pointer">
+          <img src="https://cdn-icons-png.flaticon.com/128/10623/10623122.png" alt="Paçoca" class="card-img" onerror="this.style.display='none'">
+          <input type="checkbox" value="Paçoca" class="mr-2 accent-purple-600"> Paçoca
+        </label>
+      </div>
+    </div>
+
+    <!-- Observações -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2>
+      <textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado, sem granola..." 
+        class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea>
+    </div>
+  </div>
+  
+  <!-- Modal for alerts -->
+  <div id="alert-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+      <div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="alert-box">
+          <p id="alert-message" class="text-lg text-gray-800 mb-6"></p>
+          <button onclick="closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">
+              OK
+          </button>
+      </div>
+  </div>
+
+  <!-- Barra fixa WhatsApp -->
+  <div class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-500 to-purple-700 text-white shadow-xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl">
+    <h2 class="text-lg font-bold">💰 Total: <span id="valor">R$0,00</span></h2>
+    <button onclick="enviarPedido()" 
+      class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">
+      📲 WhatsApp
+    </button>
+  </div>
+
+  <script>
+    const alertModal = document.getElementById('alert-modal');
+    const alertBox = document.getElementById('alert-box');
+    const alertMessage = document.getElementById('alert-message');
+
+    function showModal(message) {
+        alertMessage.textContent = message;
+        alertModal.classList.remove('hidden');
+        setTimeout(() => {
+            alertBox.classList.remove('scale-95', 'opacity-0');
+        }, 10);
+    }
+
+    function closeModal() {
+        alertBox.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            alertModal.classList.add('hidden');
+        }, 200);
+    }
+
+    function calcularValor() {
+      const tamanho = document.querySelector('input[name="tamanho"]:checked');
+      const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
+      const selecionados = document.querySelectorAll('input[type=checkbox]:checked').length;
+
+      if (!tamanho || quantidade <= 0) {
+        document.getElementById("valor").innerText = "R$0,00";
+        return;
+      }
+
+      let precoBase = tamanho.value === "300ml" ? 17 : 21;
+      let adicionais = selecionados > 3 ? (selecionados - 3) * 3 : 0;
+      let total = (precoBase + adicionais) * quantidade;
+
+      document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(".", ",");
+    }
+
+    function enviarPedido() {
+      const tamanho = document.querySelector('input[name="tamanho"]:checked');
+      if (!tamanho) { showModal("Por favor, selecione o tamanho do copo!"); return; }
+
+      const quantidade = document.getElementById("quantidade").value;
+      if (quantidade < 1) { showModal("Por favor, informe a quantidade!"); return; }
+
+      const selecionados = [];
+      document.querySelectorAll('input[type=checkbox]:checked').forEach(el => selecionados.push(el.value));
+      if (selecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento!"); return; }
+
+      const observacoes = document.getElementById("observacoes").value;
+      const valor = document.getElementById("valor").innerText;
+      const numero = "551499196607"; // Altere para o seu número
+      const msg = `Olá! Quero pedir ${quantidade} copo(s) de açaí ${tamanho.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 Valor Total: ${valor}`;
+      window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+
+    document.querySelectorAll('input, textarea').forEach(el => {
+      el.addEventListener("change", calcularValor);
+      el.addEventListener("input", calcularValor);
+    });
+  </script>
+
+</body>
+</html>
