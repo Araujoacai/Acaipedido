@@ -50,13 +50,7 @@
     <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥭 Frutas</h2><div id="frutas-container" class="grid grid-cols-2 gap-3"><p class="text-gray-500 col-span-2">A carregar frutas...</p></div></div>
     <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🍫 Cremes</h2><div id="cremes-container" class="grid grid-cols-1 gap-2"><p class="text-gray-500">A carregar cremes...</p></div></div>
     <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">✨ Outros</h2><div id="outros-container" class="grid grid-cols-1 gap-2 sm:grid-cols-2"><p class="text-gray-500 col-span-2">A carregar outros itens...</p></div></div>
-    
-    <!-- Campo Nome do Cliente -->
-    <div class="mb-6">
-      <h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2>
-      <input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400">
-    </div>
-
+    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2><input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
     <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2><textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea></div>
   </div>
   
@@ -69,13 +63,13 @@
   <!-- Barra fixa WhatsApp -->
   <div id="whatsapp-bar" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-500 to-purple-700 text-white shadow-xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl">
     <h2 class="text-lg font-bold">💰 Total: <span id="valor">R$0,00</span></h2>
-    <button onclick="enviarPedido()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">📲 WhatsApp</button>
+    <button id="send-order-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">📲 WhatsApp</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
@@ -93,6 +87,8 @@
     let produtos = [];
     let precosBase = {};
     let unsubscribeVendas;
+    let storeSettings = {};
+    let isStoreOpen = false;
 
     const menuContainer = document.getElementById('menu-container');
     const adminPanel = document.getElementById('admin-panel');
@@ -100,6 +96,7 @@
     const adminLoginBtn = document.getElementById('admin-login-button');
     const adminLogoutBtn = document.getElementById('admin-logout-button');
     const modalContainer = document.getElementById('modal-container');
+    const sendOrderBtn = document.getElementById('send-order-button');
 
     function showModal(content, onOpen = () => {}) {
         modalContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${content}</div>`;
@@ -134,10 +131,7 @@
     });
 
     adminLoginBtn.addEventListener('click', () => {
-        const loginFormHTML = `
-            <h3 class="text-xl font-bold mb-4">Login Admin</h3>
-            <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4">
-            <button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        const loginFormHTML = `<h3 class="text-xl font-bold mb-4">Login Admin</h3><input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4"><button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
         showModal(loginFormHTML, () => {
              document.getElementById('login-submit').addEventListener('click', async () => {
                 try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); closeModal(); } catch (error) { console.error("Erro de login:", error); alert("Email ou senha inválidos."); }
@@ -177,7 +171,16 @@
         document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(",", ".");
     }
 
+    sendOrderBtn.addEventListener('click', () => {
+      if (isStoreOpen) {
+        enviarPedido();
+      } else {
+        showModal(storeSettings.mensagemFechado || "Desculpe, estamos fechados no momento.");
+      }
+    });
+
     async function enviarPedido() {
+        if (!isStoreOpen) return;
         const tamanhoEl = document.querySelector('input[name="tamanho"]:checked');
         if (!tamanhoEl) { showModal("Por favor, selecione o tamanho do copo!"); return; }
         const quantidade = document.getElementById("quantidade").value;
@@ -189,29 +192,11 @@
         const observacoes = document.getElementById("observacoes").value;
         const valor = document.getElementById("valor").innerText;
         const orderId = 'ACAI-' + Date.now().toString().slice(-6);
-
-        try { 
-            await addDoc(collection(db, "vendas"), { 
-                orderId: orderId,
-                nomeCliente: nomeCliente,
-                tamanho: tamanhoEl.value, 
-                quantidade: parseInt(quantidade), 
-                acompanhamentos: selecionados, 
-                observacoes: observacoes || "Nenhuma", 
-                total: valor, 
-                status: "pendente", 
-                timestamp: serverTimestamp() 
-            }); 
-        } catch (e) { 
-            console.error("Erro ao salvar venda: ", e); 
-            showModal("Ocorreu um erro ao salvar seu pedido. Tente novamente."); 
-            return; 
-        }
+        try { await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: selecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); } catch (e) { console.error("Erro ao salvar venda: ", e); showModal("Ocorreu um erro ao salvar seu pedido."); return; }
         const numero = "551499196607";
         const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
     }
-    window.enviarPedido = enviarPedido;
     window.closeModal = closeModal;
 
     function renderAdminPanel() {
@@ -220,74 +205,62 @@
             <div class="flex border-b mb-4">
                 <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active">Gerenciar Produtos</button>
                 <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Relatório de Vendas</button>
+                <button id="tab-config" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Configurações</button>
             </div>
             <div id="content-produtos"></div>
             <div id="content-vendas" class="hidden"></div>
+            <div id="content-config" class="hidden"></div>
         `;
         renderProdutosAdmin();
         renderVendasAdmin();
+        renderConfigAdmin();
         
-        const tabProdutos = document.getElementById('tab-produtos');
-        const tabVendas = document.getElementById('tab-vendas');
-        const contentProdutos = document.getElementById('content-produtos');
-        const contentVendas = document.getElementById('content-vendas');
+        const tabs = { produtos: document.getElementById('tab-produtos'), vendas: document.getElementById('tab-vendas'), config: document.getElementById('tab-config') };
+        const contents = { produtos: document.getElementById('content-produtos'), vendas: document.getElementById('content-vendas'), config: document.getElementById('content-config') };
 
-        tabProdutos.addEventListener('click', () => {
-            tabProdutos.classList.add('tab-active');
-            tabVendas.classList.remove('tab-active');
-            contentProdutos.classList.remove('hidden');
-            contentVendas.classList.add('hidden');
-        });
-        tabVendas.addEventListener('click', () => {
-            tabVendas.classList.add('tab-active');
-            tabProdutos.classList.remove('tab-active');
-            contentVendas.classList.remove('hidden');
-            contentProdutos.classList.add('hidden');
+        Object.keys(tabs).forEach(key => {
+            tabs[key].addEventListener('click', () => {
+                Object.values(tabs).forEach(t => t.classList.remove('tab-active'));
+                Object.values(contents).forEach(c => c.classList.add('hidden'));
+                tabs[key].classList.add('tab-active');
+                contents[key].classList.remove('hidden');
+            });
         });
     }
 
     function renderProdutosAdmin() {
-        document.getElementById('content-produtos').innerHTML = `
-            <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
-               <h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Produto</h3>
-               <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg">
-                   <input type="hidden" id="produto-id"><input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded"><input type="number" id="produto-preco" placeholder="Preço (ex: 17.00)" step="0.01" class="p-2 border rounded"><input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded">
-                   <select id="produto-categoria" class="p-2 border rounded"><option value="tamanho">Tamanho</option><option value="fruta">Fruta</option><option value="creme">Creme</option><option value="outro">Outro</option></select>
-                   <button id="salvar-produto-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Salvar</button>
-               </div>
-               <div id="lista-produtos-admin"></div>
-            </div>`;
+        document.getElementById('content-produtos').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg mb-8"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Produto</h3><div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6 p-4 border rounded-lg"><input type="hidden" id="produto-id"><input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded"><input type="number" id="produto-preco" placeholder="Preço (ex: 17.00)" step="0.01" class="p-2 border rounded"><input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded"><select id="produto-categoria" class="p-2 border rounded"><option value="tamanho">Tamanho</option><option value="fruta">Fruta</option><option value="creme">Creme</option><option value="outro">Outro</option></select><button id="salvar-produto-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Salvar</button></div><div id="lista-produtos-admin"></div></div>`;
         document.getElementById('salvar-produto-btn').addEventListener('click', salvarProduto);
         carregarProdutosAdmin();
     }
 
     function renderVendasAdmin() {
-        document.getElementById('content-vendas').innerHTML = `
-             <div class="bg-white p-6 rounded-2xl shadow-lg">
-                <h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3>
-                <div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg">
-                    <label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded">
-                    <label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded">
-                    <button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-gray-100"><tr>
-                            <th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Total</th><th class="p-3">Status</th><th class="p-3">Ações</th>
-                        </tr></thead>
-                        <tbody id="vendas-table-body"></tbody>
-                    </table>
-                </div>
-                <div class="mt-4 text-right pr-4">
-                    <h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4>
-                </div>
-             </div>`;
-        document.getElementById('gerar-relatorio-btn').addEventListener('click', () => {
-            const start = document.getElementById('start-date').value;
-            const end = document.getElementById('end-date').value;
-            carregarVendasAdmin(start, end);
-        });
+        document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Total</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
+        document.getElementById('gerar-relatorio-btn').addEventListener('click', () => carregarVendasAdmin(document.getElementById('start-date').value, document.getElementById('end-date').value));
         carregarVendasAdmin();
+    }
+
+    function renderConfigAdmin() {
+        const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        let diasHTML = dias.map(dia => `
+            <div class="grid grid-cols-4 gap-4 items-center mb-2">
+                <span class="font-semibold capitalize">${dia}-feira</span>
+                <input type="time" id="${dia}-abertura" class="p-2 border rounded">
+                <input type="time" id="${dia}-fechamento" class="p-2 border rounded">
+                <label class="flex items-center gap-2"><input type="checkbox" id="${dia}-aberto" class="w-5 h-5"> Aberto</label>
+            </div>`).join('');
+
+        document.getElementById('content-config').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-4 text-purple-700">Horário de Funcionamento</h3>
+                <div class="p-4 border rounded-lg">${diasHTML}</div>
+                <h3 class="text-2xl font-semibold mt-6 mb-4 text-purple-700">Mensagem (Loja Fechada)</h3>
+                <textarea id="mensagem-fechado" class="w-full p-2 border rounded" rows="3" placeholder="Ex: Estamos fechados. Nosso horário é de..."></textarea>
+                <button id="salvar-config-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 mt-4">Salvar Configurações</button>
+            </div>`;
+        
+        document.getElementById('salvar-config-btn').addEventListener('click', salvarConfiguracoes);
+        carregarConfiguracoesAdmin();
     }
 
     async function salvarProduto() {
@@ -343,7 +316,7 @@
         if (startDate && endDate) {
             const start = new Date(startDate);
             const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999); // Inclui o dia todo
+            end.setHours(23, 59, 59, 999);
             q = query(collection(db, "vendas"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
         }
         
@@ -362,9 +335,7 @@
             snapshot.docs.forEach(docSnap => {
                 const venda = { id: docSnap.id, ...docSnap.data() };
                 const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
-                if (!isNaN(valorNumerico)) {
-                    totalVendas += valorNumerico;
-                }
+                if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
 
                 const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
                 const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
@@ -384,7 +355,6 @@
             });
 
             document.getElementById('total-vendas').innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
-
             document.querySelectorAll('.confirm-venda-btn').forEach(btn => btn.addEventListener('click', e => confirmarVenda(e.currentTarget.dataset.id)));
             document.querySelectorAll('.delete-venda-btn').forEach(btn => btn.addEventListener('click', e => deletarVenda(e.currentTarget.dataset.id)));
         });
@@ -400,18 +370,65 @@
             });
         });
     }
+    
+    async function salvarConfiguracoes() {
+        const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        const settings = { mensagemFechado: document.getElementById('mensagem-fechado').value };
+        dias.forEach(dia => { settings[dia] = { aberto: document.getElementById(`${dia}-aberto`).checked, abertura: document.getElementById(`${dia}-abertura`).value, fechamento: document.getElementById(`${dia}-fechamento`).value, }; });
+        try { await setDoc(doc(db, "configuracoes", "horarios"), settings); showModal('<p>Configurações salvas com sucesso!</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); } catch (error) { console.error("Erro ao salvar configurações:", error); showModal('<p class="text-red-500">Erro ao salvar.</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); }
+    }
 
-    onSnapshot(collection(db, "produtos"), 
-        (snapshot) => {
-            produtos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderMenu();
-            calcularValor();
-        },
-        (error) => {
-            console.error("Erro ao carregar produtos:", error);
-            document.getElementById('menu-container').innerHTML = '<p class="text-red-600 text-center">Não foi possível carregar o cardápio.</p>';
+    async function carregarConfiguracoesAdmin() {
+        const docRef = doc(db, "configuracoes", "horarios");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const settings = docSnap.data();
+            document.getElementById('mensagem-fechado').value = settings.mensagemFechado || '';
+            const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+            dias.forEach(dia => {
+                if (settings[dia]) {
+                    document.getElementById(`${dia}-aberto`).checked = settings[dia].aberto;
+                    document.getElementById(`${dia}-abertura`).value = settings[dia].abertura;
+                    document.getElementById(`${dia}-fechamento`).value = settings[dia].fechamento;
+                }
+            });
         }
-    );
+    }
+
+    function checkStoreOpen() {
+        const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+        const agora = new Date();
+        const diaSemana = dias[agora.getDay()];
+        const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+        const configDia = storeSettings[diaSemana];
+        if (!configDia || !configDia.aberto) { isStoreOpen = false; } else {
+            const [aberturaH, aberturaM] = configDia.abertura.split(':').map(Number);
+            const [fechamentoH, fechamentoM] = configDia.fechamento.split(':').map(Number);
+            const aberturaTotal = aberturaH * 60 + aberturaM;
+            const fechamentoTotal = fechamentoH * 60 + fechamentoM;
+            isStoreOpen = horaAtual >= aberturaTotal && horaAtual < fechamentoTotal;
+        }
+        if (isStoreOpen) { sendOrderBtn.disabled = false; sendOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed'); sendOrderBtn.classList.add('bg-green-500', 'hover:bg-green-600'); } else { sendOrderBtn.disabled = true; sendOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed'); sendOrderBtn.classList.remove('bg-green-500', 'hover:bg-green-600'); }
+    }
+
+    onSnapshot(doc(db, "configuracoes", "horarios"), (doc) => {
+        if (doc.exists()) { storeSettings = doc.data(); } else { storeSettings = { mensagemFechado: "Horário não configurado." }; }
+        checkStoreOpen();
+    }, (error) => {
+        console.error("Erro ao carregar configurações:", error.message);
+        storeSettings = { mensagemFechado: "Não foi possível verificar o horário." };
+        isStoreOpen = true; // Assume a loja como aberta se as regras de segurança impedirem a leitura.
+        checkStoreOpen();
+    });
+
+    onSnapshot(collection(db, "produtos"), (snapshot) => {
+        produtos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderMenu();
+        calcularValor();
+    }, (error) => {
+        console.error("Erro ao carregar produtos:", error);
+        document.getElementById('menu-container').innerHTML = '<p class="text-red-600 text-center">Não foi possível carregar o cardápio.</p>';
+    });
   </script>
 </body>
 </html>
