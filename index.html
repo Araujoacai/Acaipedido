@@ -19,7 +19,7 @@
     .tab-active { border-color: #9333ea; background-color: #f3e8ff; color: #9333ea; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800 font-sans">
+<body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800 font-sans p-4">
 
   <!-- Botão de Login Admin -->
   <button id="admin-login-button" class="fixed bottom-20 right-4 bg-purple-700 text-white p-3 rounded-full shadow-lg z-40 hover:bg-purple-800 transition">
@@ -30,17 +30,33 @@
   </button>
 
   <!-- Cardápio Principal -->
-  <div id="menu-container" class="bg-white/95 shadow-2xl rounded-3xl p-6 w-full max-w-md mt-4 mb-32 backdrop-blur-sm border border-purple-200">
-    <h1 class="text-3xl font-extrabold text-center text-purple-800 mb-3">🍧 Cardápio de Açaí</h1>
-    <p class="text-center font-bold text-pink-600 tracking-wide">ACOMPANHAMENTOS</p>
-    <p class="text-center text-gray-700 mb-6">3 por copo | Adicional R$3</p>
-    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2><div id="tamanhos-container" class="flex flex-col sm:flex-row gap-3"><p class="text-gray-500">A carregar tamanhos...</p></div></div>
-    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center"><img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img"> Quantidade</h2><input type="number" id="quantidade" min="1" value="1" class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400"></div>
-    <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥭 Frutas</h2><div id="frutas-container" class="grid grid-cols-2 gap-3"><p class="text-gray-500 col-span-2">A carregar frutas...</p></div></div>
-    <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🍫 Cremes</h2><div id="cremes-container" class="grid grid-cols-1 gap-2"><p class="text-gray-500">A carregar cremes...</p></div></div>
-    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">✨ Outros</h2><div id="outros-container" class="grid grid-cols-1 gap-2 sm:grid-cols-2"><p class="text-gray-500 col-span-2">A carregar outros itens...</p></div></div>
-    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2><input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
-    <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2><textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea></div>
+  <div id="menu-container" class="bg-white/95 shadow-2xl rounded-3xl p-6 w-full max-w-md lg:max-w-4xl mb-24 lg:mb-4 backdrop-blur-sm border border-purple-200">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-extrabold text-purple-800 mb-3">🍧 Cardápio de Açaí</h1>
+        <p class="font-bold text-pink-600 tracking-wide">ACOMPANHAMENTOS</p>
+        <p class="text-gray-700">3 por copo | Adicional R$3</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
+        <!-- Coluna Esquerda: Pedido -->
+        <div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2><div id="tamanhos-container" class="flex flex-col sm:flex-row gap-3"><p class="text-gray-500">A carregar tamanhos...</p></div></div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center"><img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img"> Quantidade</h2><input type="number" id="quantidade" min="1" value="1" class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400"></div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2><input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2><textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea></div>
+        </div>
+        <!-- Coluna Direita: Acompanhamentos -->
+        <div>
+            <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥭 Frutas</h2><div id="frutas-container" class="grid grid-cols-2 gap-3"><p class="text-gray-500 col-span-2">A carregar frutas...</p></div></div>
+            <div class="mb-4"><h2 class="text-lg font-semibold text-purple-700 mb-2">🍫 Cremes</h2><div id="cremes-container" class="grid grid-cols-1 gap-2"><p class="text-gray-500">A carregar cremes...</p></div></div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">✨ Outros</h2><div id="outros-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2"><p class="text-gray-500 col-span-2">A carregar outros itens...</p></div></div>
+        </div>
+    </div>
+     <!-- Barra de Ação para Desktop -->
+    <div id="desktop-action-bar" class="hidden lg:flex items-center justify-end mt-8 pt-6 border-t">
+        <h2 class="text-2xl font-bold mr-6">💰 Total: <span id="valor-desktop">R$0,00</span></h2>
+        <button id="send-order-button-desktop" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition text-lg">📲 Enviar Pedido</button>
+    </div>
   </div>
   
   <!-- Painel Admin (escondido por padrão) -->
@@ -49,10 +65,10 @@
   <!-- Modal Genérico -->
   <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4"></div>
 
-  <!-- Barra fixa WhatsApp -->
-  <div id="whatsapp-bar" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-500 to-purple-700 text-white shadow-xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl">
-    <h2 class="text-lg font-bold">💰 Total: <span id="valor">R$0,00</span></h2>
-    <button id="send-order-button" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">📲 WhatsApp</button>
+  <!-- Barra fixa WhatsApp (Apenas Mobile) -->
+  <div id="whatsapp-bar" class="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-pink-500 to-purple-700 text-white shadow-xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl lg:hidden">
+    <h2 class="text-lg font-bold">💰 Total: <span id="valor-mobile">R$0,00</span></h2>
+    <button id="send-order-button-mobile" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">📲 WhatsApp</button>
   </div>
 
   <script type="module">
@@ -86,7 +102,8 @@
     const adminLoginBtn = document.getElementById('admin-login-button');
     const adminLogoutBtn = document.getElementById('admin-logout-button');
     const modalContainer = document.getElementById('modal-container');
-    const sendOrderBtn = document.getElementById('send-order-button');
+    const sendOrderBtnMobile = document.getElementById('send-order-button-mobile');
+    const sendOrderBtnDesktop = document.getElementById('send-order-button-desktop');
 
     function showModal(content, onOpen = () => {}) {
         let modalContent = content;
@@ -148,14 +165,18 @@
 
     function calcularValor() {
         const tamanhoEl = document.querySelector('input[name="tamanho"]:checked');
-        if (!tamanhoEl) { document.getElementById("valor").innerText = "R$0,00"; return; }
-        const tamanho = tamanhoEl.value;
-        const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
-        const selecionados = document.querySelectorAll('input[type=checkbox]:checked').length;
-        let precoBase = precosBase[tamanho] || 0;
-        let adicionais = selecionados > 3 ? (selecionados - 3) * 3 : 0;
-        let total = (precoBase + adicionais) * quantidade;
-        document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(",", ".");
+        let totalText = "R$0,00";
+        if (tamanhoEl) {
+            const tamanho = tamanhoEl.value;
+            const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
+            const selecionados = document.querySelectorAll('input[type=checkbox]:checked').length;
+            let precoBase = precosBase[tamanho] || 0;
+            let adicionais = selecionados > 3 ? (selecionados - 3) * 3 : 0;
+            let total = (precoBase + adicionais) * quantidade;
+            totalText = "R$" + total.toFixed(2).replace(",", ".");
+        }
+        document.getElementById("valor-mobile").innerText = totalText;
+        document.getElementById("valor-desktop").innerText = totalText;
     }
     
     function resetarFormulario() {
@@ -167,9 +188,11 @@
         calcularValor();
     }
 
-    sendOrderBtn.addEventListener('click', () => {
-      if (isStoreOpen) { enviarPedido(); } else { showModal(storeSettings.mensagemFechado || "Desculpe, estamos fechados no momento."); }
-    });
+    function handleOrderAction() {
+        if (isStoreOpen) { enviarPedido(); } else { showModal(storeSettings.mensagemFechado || "Desculpe, estamos fechados no momento."); }
+    }
+    sendOrderBtnMobile.addEventListener('click', handleOrderAction);
+    sendOrderBtnDesktop.addEventListener('click', handleOrderAction);
 
     async function enviarPedido() {
         if (!isStoreOpen) return;
@@ -182,7 +205,7 @@
         const selecionados = Array.from(document.querySelectorAll('input[type=checkbox]:checked')).map(el => el.value);
         if (selecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento!"); return; }
         const observacoes = document.getElementById("observacoes").value;
-        const valor = document.getElementById("valor").innerText;
+        const valor = document.getElementById("valor-mobile").innerText;
         const orderId = 'ACAI-' + Date.now().toString().slice(-6);
         try { await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: selecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); } catch (e) { console.error("Erro ao salvar venda: ", e); showModal("Ocorreu um erro ao salvar seu pedido."); return; }
         const numero = "551499196607";
@@ -260,7 +283,7 @@
         document.getElementById('salvar-config-btn').addEventListener('click', salvarConfiguracoes);
         carregarConfiguracoesAdmin();
     }
-
+    
     function renderCaixaAdmin() {
         document.getElementById('content-caixa').innerHTML = `
             <div class="bg-white p-6 rounded-2xl shadow-lg">
@@ -523,7 +546,19 @@
             const fechamentoTotal = fechamentoH * 60 + fechamentoM;
             isStoreOpen = horaAtual >= aberturaTotal && horaAtual < fechamentoTotal;
         }
-        if (isStoreOpen) { sendOrderBtn.disabled = false; sendOrderBtn.classList.remove('bg-gray-400', 'cursor-not-allowed'); sendOrderBtn.classList.add('bg-green-500', 'hover:bg-green-600'); } else { sendOrderBtn.disabled = true; sendOrderBtn.classList.add('bg-gray-400', 'cursor-not-allowed'); sendOrderBtn.classList.remove('bg-green-500', 'hover:bg-green-600'); }
+        
+        const buttons = [sendOrderBtnMobile, sendOrderBtnDesktop];
+        buttons.forEach(btn => {
+            if (isStoreOpen) { 
+                btn.disabled = false; 
+                btn.classList.remove('bg-gray-400', 'cursor-not-allowed'); 
+                btn.classList.add('bg-green-500', 'hover:bg-green-600'); 
+            } else { 
+                btn.disabled = true; 
+                btn.classList.add('bg-gray-400', 'cursor-not-allowed'); 
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600'); 
+            }
+        });
     }
 
     onSnapshot(doc(db, "configuracoes", "horarios"), (doc) => {
