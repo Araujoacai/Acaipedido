@@ -14,20 +14,9 @@
       object-fit: contain; 
       margin-right: 8px; 
     }
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-    }
-    .tab-active {
-        border-color: #9333ea;
-        background-color: #f3e8ff;
-        color: #9333ea;
-    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .tab-active { border-color: #9333ea; background-color: #f3e8ff; color: #9333ea; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800 font-sans">
@@ -87,6 +76,7 @@
     let produtos = [];
     let precosBase = {};
     let unsubscribeVendas;
+    let unsubscribeFluxoCaixa;
     let storeSettings = {};
     let isStoreOpen = false;
 
@@ -101,10 +91,7 @@
     function showModal(content, onOpen = () => {}) {
         let modalContent = content;
         if (typeof content === 'string') {
-            modalContent = `
-                <p class="text-lg text-gray-800 mb-6">${content}</p>
-                <button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>
-            `;
+            modalContent = `<p class="text-lg text-gray-800 mb-6">${content}</p><button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>`;
         }
         modalContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
         modalContainer.classList.remove('hidden');
@@ -121,19 +108,12 @@
 
     onAuthStateChanged(auth, user => {
         if (user) {
-            adminLoginBtn.classList.add('hidden');
-            adminLogoutBtn.classList.remove('hidden');
-            menuContainer.classList.add('hidden');
-            whatsappBar.classList.add('hidden');
-            adminPanel.classList.remove('hidden');
+            adminLoginBtn.classList.add('hidden'); adminLogoutBtn.classList.remove('hidden'); menuContainer.classList.add('hidden'); whatsappBar.classList.add('hidden'); adminPanel.classList.remove('hidden');
             renderAdminPanel();
         } else {
-            adminLoginBtn.classList.remove('hidden');
-            adminLogoutBtn.classList.add('hidden');
-            menuContainer.classList.remove('hidden');
-            whatsappBar.classList.remove('hidden');
-            adminPanel.classList.add('hidden');
+            adminLoginBtn.classList.remove('hidden'); adminLogoutBtn.classList.add('hidden'); menuContainer.classList.remove('hidden'); whatsappBar.classList.remove('hidden'); adminPanel.classList.add('hidden');
             if (unsubscribeVendas) unsubscribeVendas();
+            if (unsubscribeFluxoCaixa) unsubscribeFluxoCaixa();
         }
     });
 
@@ -177,7 +157,7 @@
         let total = (precoBase + adicionais) * quantidade;
         document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(",", ".");
     }
-
+    
     function resetarFormulario() {
         document.querySelectorAll('input[name="tamanho"]:checked').forEach(el => el.checked = false);
         document.querySelectorAll('input[type=checkbox]:checked').forEach(el => el.checked = false);
@@ -188,11 +168,7 @@
     }
 
     sendOrderBtn.addEventListener('click', () => {
-      if (isStoreOpen) {
-        enviarPedido();
-      } else {
-        showModal(storeSettings.mensagemFechado || "Desculpe, estamos fechados no momento.");
-      }
+      if (isStoreOpen) { enviarPedido(); } else { showModal(storeSettings.mensagemFechado || "Desculpe, estamos fechados no momento."); }
     });
 
     async function enviarPedido() {
@@ -209,7 +185,7 @@
         const valor = document.getElementById("valor").innerText;
         const orderId = 'ACAI-' + Date.now().toString().slice(-6);
         try { await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: selecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); } catch (e) { console.error("Erro ao salvar venda: ", e); showModal("Ocorreu um erro ao salvar seu pedido."); return; }
-        const numero = "5514991962607";
+        const numero = "551499196607";
         const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
         
@@ -224,18 +200,21 @@
             <div class="flex border-b mb-4">
                 <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active">Gerenciar Produtos</button>
                 <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Relatório de Vendas</button>
+                <button id="tab-caixa" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Fluxo de Caixa</button>
                 <button id="tab-config" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Configurações</button>
             </div>
             <div id="content-produtos"></div>
             <div id="content-vendas" class="hidden"></div>
+            <div id="content-caixa" class="hidden"></div>
             <div id="content-config" class="hidden"></div>
         `;
         renderProdutosAdmin();
         renderVendasAdmin();
+        renderCaixaAdmin();
         renderConfigAdmin();
         
-        const tabs = { produtos: document.getElementById('tab-produtos'), vendas: document.getElementById('tab-vendas'), config: document.getElementById('tab-config') };
-        const contents = { produtos: document.getElementById('content-produtos'), vendas: document.getElementById('content-vendas'), config: document.getElementById('content-config') };
+        const tabs = { produtos: document.getElementById('tab-produtos'), vendas: document.getElementById('tab-vendas'), caixa: document.getElementById('tab-caixa'), config: document.getElementById('tab-config') };
+        const contents = { produtos: document.getElementById('content-produtos'), vendas: document.getElementById('content-vendas'), caixa: document.getElementById('content-caixa'), config: document.getElementById('content-config') };
 
         Object.keys(tabs).forEach(key => {
             tabs[key].addEventListener('click', () => {
@@ -280,6 +259,39 @@
         
         document.getElementById('salvar-config-btn').addEventListener('click', salvarConfiguracoes);
         carregarConfiguracoesAdmin();
+    }
+
+    function renderCaixaAdmin() {
+        document.getElementById('content-caixa').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-semibold mb-4 text-purple-700">Fluxo de Caixa</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center">
+                    <div class="bg-green-100 p-4 rounded-lg"><h4 class="font-semibold text-green-800">Total de Entradas</h4><p id="total-entradas" class="text-2xl font-bold text-green-600">R$0,00</p></div>
+                    <div class="bg-red-100 p-4 rounded-lg"><h4 class="font-semibold text-red-800">Total de Saídas</h4><p id="total-saidas" class="text-2xl font-bold text-red-600">R$0,00</p></div>
+                    <div class="bg-blue-100 p-4 rounded-lg"><h4 class="font-semibold text-blue-800">Saldo Atual</h4><p id="saldo-atual" class="text-2xl font-bold text-blue-600">R$0,00</p></div>
+                </div>
+                <div class="mb-6 p-4 border rounded-lg">
+                    <h4 class="text-xl font-medium mb-3">Adicionar Lançamento</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <input type="hidden" id="transacao-id">
+                        <input type="text" id="transacao-descricao" placeholder="Descrição" class="p-2 border rounded col-span-2">
+                        <input type="number" id="transacao-valor" placeholder="Valor" step="0.01" class="p-2 border rounded">
+                        <select id="transacao-tipo" class="p-2 border rounded"><option value="entrada">Entrada</option><option value="saida">Saída</option></select>
+                        <button id="salvar-transacao-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-4 md:col-span-1">Salvar</button>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg">
+                    <label for="start-date-caixa">De:</label><input type="date" id="start-date-caixa" class="p-2 border rounded">
+                    <label for="end-date-caixa">Até:</label><input type="date" id="end-date-caixa" class="p-2 border rounded">
+                    <button id="gerar-relatorio-caixa-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Filtrar</button>
+                </div>
+                <div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr>
+                    <th class="p-3">Data</th><th class="p-3">Descrição</th><th class="p-3">Tipo</th><th class="p-3">Valor</th><th class="p-3">Ações</th>
+                </tr></thead><tbody id="caixa-table-body"></tbody></table></div>
+            </div>`;
+        document.getElementById('salvar-transacao-btn').addEventListener('click', salvarTransacao);
+        document.getElementById('gerar-relatorio-caixa-btn').addEventListener('click', () => carregarFluxoCaixa(document.getElementById('start-date-caixa').value, document.getElementById('end-date-caixa').value));
+        carregarFluxoCaixa();
     }
 
     async function salvarProduto() {
@@ -379,7 +391,23 @@
         });
     }
 
-    async function confirmarVenda(id) { await updateDoc(doc(db, "vendas", id), { status: 'concluida' }); }
+    async function confirmarVenda(id) {
+        const vendaRef = doc(db, "vendas", id);
+        const vendaSnap = await getDoc(vendaRef);
+        if (vendaSnap.exists()) {
+            const venda = vendaSnap.data();
+            const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+            
+            await addDoc(collection(db, "fluxoCaixa"), {
+                descricao: `Venda Pedido #${venda.orderId}`,
+                valor: valorNumerico,
+                tipo: 'entrada',
+                timestamp: serverTimestamp()
+            });
+
+            await updateDoc(vendaRef, { status: 'concluida' });
+        }
+    }
 
     function deletarVenda(id) {
         const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir esta venda?</p><button id="confirm-delete-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
@@ -414,6 +442,74 @@
         }
     }
 
+    async function salvarTransacao() {
+        const id = document.getElementById('transacao-id').value;
+        const transacao = {
+            descricao: document.getElementById('transacao-descricao').value,
+            valor: parseFloat(document.getElementById('transacao-valor').value),
+            tipo: document.getElementById('transacao-tipo').value,
+            timestamp: serverTimestamp()
+        };
+        if (!transacao.descricao || isNaN(transacao.valor) || transacao.valor <= 0) { showModal("Descrição e valor válido são obrigatórios."); return; }
+        try {
+            if (id) { await updateDoc(doc(db, "fluxoCaixa", id), { descricao: transacao.descricao, valor: transacao.valor, tipo: transacao.tipo }); } 
+            else { await addDoc(collection(db, "fluxoCaixa"), transacao); }
+            document.getElementById('transacao-id').value = ''; document.getElementById('transacao-descricao').value = ''; document.getElementById('transacao-valor').value = '';
+        } catch (error) { console.error("Erro ao salvar transação:", error); showModal("Não foi possível salvar a transação."); }
+    }
+
+    function carregarFluxoCaixa(startDate, endDate) {
+        const tableBody = document.getElementById('caixa-table-body');
+        let q = query(collection(db, "fluxoCaixa"), orderBy("timestamp", "desc"));
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            q = query(collection(db, "fluxoCaixa"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
+        }
+        
+        if (unsubscribeFluxoCaixa) unsubscribeFluxoCaixa();
+
+        unsubscribeFluxoCaixa = onSnapshot(q, (snapshot) => {
+            tableBody.innerHTML = '';
+            let totalEntradas = 0, totalSaidas = 0;
+
+            if (snapshot.empty) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Nenhum lançamento encontrado.</td></tr>'; }
+            
+            snapshot.docs.forEach(docSnap => {
+                const t = { id: docSnap.id, ...docSnap.data() };
+                const valor = t.valor || 0;
+                if (t.tipo === 'entrada') totalEntradas += valor; else totalSaidas += valor;
+
+                const data = t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString('pt-BR') : 'N/A';
+                const tipoClass = t.tipo === 'entrada' ? 'text-green-600' : 'text-red-600';
+                tableBody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3 text-sm">${data}</td><td class="p-3">${t.descricao}</td>
+                        <td class="p-3 font-semibold ${tipoClass} capitalize">${t.tipo}</td>
+                        <td class="p-3 font-medium">R$${valor.toFixed(2).replace('.', ',')}</td>
+                        <td class="p-3"><button class="delete-transacao-btn bg-red-500 text-white px-2 py-1 rounded text-xs" data-id="${t.id}">🗑️</button></td>
+                    </tr>`;
+            });
+            
+            document.getElementById('total-entradas').innerText = `R$${totalEntradas.toFixed(2).replace('.', ',')}`;
+            document.getElementById('total-saidas').innerText = `R$${totalSaidas.toFixed(2).replace('.', ',')}`;
+            document.getElementById('saldo-atual').innerText = `R$${(totalEntradas - totalSaidas).toFixed(2).replace('.', ',')}`;
+
+            document.querySelectorAll('.delete-transacao-btn').forEach(btn => btn.addEventListener('click', e => deletarTransacao(e.currentTarget.dataset.id)));
+        });
+    }
+
+    function deletarTransacao(id) {
+        const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este lançamento?</p><button id="confirm-delete-transacao-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        showModal(confirmationHTML, () => {
+            document.getElementById('confirm-delete-transacao-btn').addEventListener('click', async () => {
+                try { await deleteDoc(doc(db, "fluxoCaixa", id)); closeModal(); } catch (error) { console.error("Erro ao excluir transação:", error); closeModal(); showModal('Ocorreu um erro ao excluir.'); }
+            });
+        });
+    }
+
     function checkStoreOpen() {
         const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const agora = new Date();
@@ -436,7 +532,7 @@
     }, (error) => {
         console.error("Erro ao carregar configurações:", error.message);
         storeSettings = { mensagemFechado: "Não foi possível verificar o horário." };
-        isStoreOpen = true; // Assume a loja como aberta se as regras de segurança impedirem a leitura.
+        isStoreOpen = true; 
         checkStoreOpen();
     });
 
