@@ -99,7 +99,14 @@
     const sendOrderBtn = document.getElementById('send-order-button');
 
     function showModal(content, onOpen = () => {}) {
-        modalContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${content}</div>`;
+        let modalContent = content;
+        if (typeof content === 'string') {
+            modalContent = `
+                <p class="text-lg text-gray-800 mb-6">${content}</p>
+                <button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>
+            `;
+        }
+        modalContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
         modalContainer.classList.remove('hidden');
         setTimeout(() => { document.getElementById('modal-box').classList.remove('scale-95', 'opacity-0'); onOpen(); }, 10);
     }
@@ -171,6 +178,15 @@
         document.getElementById("valor").innerText = "R$" + total.toFixed(2).replace(",", ".");
     }
 
+    function resetarFormulario() {
+        document.querySelectorAll('input[name="tamanho"]:checked').forEach(el => el.checked = false);
+        document.querySelectorAll('input[type=checkbox]:checked').forEach(el => el.checked = false);
+        document.getElementById('quantidade').value = 1;
+        document.getElementById('nome-cliente').value = '';
+        document.getElementById('observacoes').value = '';
+        calcularValor();
+    }
+
     sendOrderBtn.addEventListener('click', () => {
       if (isStoreOpen) {
         enviarPedido();
@@ -196,6 +212,9 @@
         const numero = "5514991962607";
         const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
+        
+        showModal("Pedido enviado com sucesso! Agradecemos a preferência.");
+        resetarFormulario();
     }
     window.closeModal = closeModal;
 
@@ -304,7 +323,7 @@
         const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este produto?</p><button id="confirm-delete-produto-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
         showModal(confirmationHTML, () => {
             document.getElementById('confirm-delete-produto-btn').addEventListener('click', async () => {
-                try { await deleteDoc(doc(db, "produtos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir produto:", error); closeModal(); showModal('<p class="text-red-500">Ocorreu um erro.</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); }
+                try { await deleteDoc(doc(db, "produtos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir produto:", error); closeModal(); showModal('Ocorreu um erro ao excluir o produto.'); }
             });
         });
     }
@@ -366,7 +385,7 @@
         const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir esta venda?</p><button id="confirm-delete-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
         showModal(confirmationHTML, () => {
             document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-                try { await deleteDoc(doc(db, "vendas", id)); closeModal(); } catch (error) { console.error("Erro ao excluir venda:", error); closeModal(); showModal('<p class="text-red-500">Ocorreu um erro.</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); }
+                try { await deleteDoc(doc(db, "vendas", id)); closeModal(); } catch (error) { console.error("Erro ao excluir venda:", error); closeModal(); showModal('Ocorreu um erro ao excluir a venda.'); }
             });
         });
     }
@@ -375,7 +394,7 @@
         const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const settings = { mensagemFechado: document.getElementById('mensagem-fechado').value };
         dias.forEach(dia => { settings[dia] = { aberto: document.getElementById(`${dia}-aberto`).checked, abertura: document.getElementById(`${dia}-abertura`).value, fechamento: document.getElementById(`${dia}-fechamento`).value, }; });
-        try { await setDoc(doc(db, "configuracoes", "horarios"), settings); showModal('<p>Configurações salvas com sucesso!</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); } catch (error) { console.error("Erro ao salvar configurações:", error); showModal('<p class="text-red-500">Erro ao salvar.</p><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg mt-4">OK</button>'); }
+        try { await setDoc(doc(db, "configuracoes", "horarios"), settings); showModal('Configurações salvas com sucesso!'); } catch (error) { console.error("Erro ao salvar configurações:", error); showModal('Erro ao salvar as configurações.'); }
     }
 
     async function carregarConfiguracoesAdmin() {
