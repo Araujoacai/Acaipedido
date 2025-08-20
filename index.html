@@ -34,7 +34,7 @@
     <div class="text-center mb-8">
         <h1 class="text-3xl font-extrabold text-purple-800 mb-3">🍧 Cardápio de Açaí</h1>
         <p class="font-bold text-pink-600 tracking-wide">ACOMPANHAMENTOS</p>
-        <p class="text-gray-700">3 por copo | Adicional R$3</p>
+        <p class="text-gray-700">3 porções por copo | Adicional R$3 por porção extra</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
@@ -150,15 +150,38 @@
         Object.values(containers).forEach(c => c.innerHTML = '');
         precosBase = {};
         if (produtos.length === 0) { Object.values(containers).forEach(c => c.innerHTML = '<p class="text-red-500 text-sm col-span-2">Nenhum item. Faça login como admin para adicionar produtos.</p>'); return; }
+        
         produtos.forEach(p => {
+            const pId = p.name.replace(/[^a-zA-Z0-9]/g, ''); // Create a safe ID
             if (p.category === 'tamanho') {
                 precosBase[p.name] = p.price;
                 containers.tamanho.innerHTML += `<label class="flex items-center justify-between bg-purple-100 px-4 py-3 rounded-2xl shadow cursor-pointer hover:bg-purple-200 transition"><div><span class="font-medium text-gray-800">${p.name}</span><span class="ml-3 text-sm text-gray-600">R$${p.price.toFixed(2)}</span></div><input type="radio" name="tamanho" value="${p.name}" class="accent-pink-500"></label>`;
             } else {
                 const bgColor = p.category === 'fruta' ? 'bg-pink-100 hover:bg-pink-200' : p.category === 'creme' ? 'bg-purple-100 hover:bg-purple-200' : 'bg-violet-200 hover:bg-violet-300';
                 const accentColor = p.category === 'fruta' ? 'accent-purple-600' : 'accent-pink-600';
-                if(containers[p.category]) { containers[p.category].innerHTML += `<label class="flex items-center ${bgColor} px-3 py-2 rounded-xl shadow cursor-pointer"><img src="${p.iconUrl}" alt="${p.name}" class="card-img" onerror="this.style.display='none'"><span class="flex-grow">${p.name}</span><input type="checkbox" value="${p.name}" class="mr-2 ${accentColor}"></label>`; }
+                if(containers[p.category]) { 
+                    containers[p.category].innerHTML += `
+                    <label class="flex items-center ${bgColor} px-3 py-2 rounded-xl shadow cursor-pointer">
+                        <img src="${p.iconUrl}" alt="${p.name}" class="card-img flex-shrink-0" onerror="this.style.display='none'">
+                        <input type="checkbox" value="${p.name}" data-qty-target="qty-${pId}" class="acompanhamento-check mx-2 ${accentColor} flex-shrink-0">
+                        <span class="flex-grow truncate">${p.name}</span>
+                        <input type="number" value="1" min="1" id="qty-${pId}" class="acompanhamento-qty w-14 text-center border rounded-md hidden p-1 ml-2 flex-shrink-0">
+                    </label>`;
+                }
             }
+        });
+
+        document.querySelectorAll('.acompanhamento-check').forEach(check => {
+            check.addEventListener('change', (e) => {
+                const qtyInput = document.getElementById(e.target.dataset.qtyTarget);
+                if (e.target.checked) {
+                    qtyInput.classList.remove('hidden');
+                    qtyInput.value = 1;
+                } else {
+                    qtyInput.classList.add('hidden');
+                }
+                calcularValor();
+            });
         });
         document.querySelectorAll('input, textarea').forEach(el => { el.addEventListener("change", calcularValor); el.addEventListener("input", calcularValor); });
     }
@@ -169,11 +192,17 @@
         if (tamanhoEl) {
             const tamanho = tamanhoEl.value;
             const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
-            const selecionados = document.querySelectorAll('input[type=checkbox]:checked').length;
+            
+            let totalPorcoes = 0;
+            document.querySelectorAll('.acompanhamento-check:checked').forEach(check => {
+                const qtyInput = document.getElementById(check.dataset.qtyTarget);
+                totalPorcoes += parseInt(qtyInput.value) || 0;
+            });
+
             let precoBase = precosBase[tamanho] || 0;
-            let adicionais = selecionados > 3 ? (selecionados - 3) * 3 : 0;
+            let adicionais = totalPorcoes > 3 ? (totalPorcoes - 3) * 3 : 0;
             let total = (precoBase + adicionais) * quantidade;
-            totalText = "R$" + total.toFixed(2).replace(",", ".");
+            totalText = "R$" + total.toFixed(2).replace(".", ",");
         }
         document.getElementById("valor-mobile").innerText = totalText;
         document.getElementById("valor-desktop").innerText = totalText;
@@ -181,7 +210,11 @@
     
     function resetarFormulario() {
         document.querySelectorAll('input[name="tamanho"]:checked').forEach(el => el.checked = false);
-        document.querySelectorAll('input[type=checkbox]:checked').forEach(el => el.checked = false);
+        document.querySelectorAll('.acompanhamento-check:checked').forEach(el => {
+            el.checked = false;
+            const qtyInput = document.getElementById(el.dataset.qtyTarget);
+            if (qtyInput) qtyInput.classList.add('hidden');
+        });
         document.getElementById('quantidade').value = 1;
         document.getElementById('nome-cliente').value = '';
         document.getElementById('observacoes').value = '';
@@ -202,14 +235,23 @@
         if (quantidade < 1) { showModal("Por favor, informe a quantidade!"); return; }
         const nomeCliente = document.getElementById('nome-cliente').value.trim();
         if (!nomeCliente) { showModal("Por favor, digite seu nome!"); return; }
-        const selecionados = Array.from(document.querySelectorAll('input[type=checkbox]:checked')).map(el => el.value);
-        if (selecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento!"); return; }
+        
+        const acompanhamentosSelecionados = [];
+        document.querySelectorAll('.acompanhamento-check:checked').forEach(check => {
+            const nome = check.value;
+            const qtyInput = document.getElementById(check.dataset.qtyTarget);
+            const qty = qtyInput.value;
+            acompanhamentosSelecionados.push(`${nome} (x${qty})`);
+        });
+
+        if (acompanhamentosSelecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento!"); return; }
+        
         const observacoes = document.getElementById("observacoes").value;
         const valor = document.getElementById("valor-mobile").innerText;
         const orderId = 'ACAI-' + Date.now().toString().slice(-6);
-        try { await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: selecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); } catch (e) { console.error("Erro ao salvar venda: ", e); showModal("Ocorreu um erro ao salvar seu pedido."); return; }
+        try { await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); } catch (e) { console.error("Erro ao salvar venda: ", e); showModal("Ocorreu um erro ao salvar seu pedido."); return; }
         const numero = "551499196607";
-        const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${selecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
+        const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${acompanhamentosSelecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
         
         showModal("Pedido enviado com sucesso! Agradecemos a preferência.");
@@ -549,14 +591,16 @@
         
         const buttons = [sendOrderBtnMobile, sendOrderBtnDesktop];
         buttons.forEach(btn => {
-            if (isStoreOpen) { 
-                btn.disabled = false; 
-                btn.classList.remove('bg-gray-400', 'cursor-not-allowed'); 
-                btn.classList.add('bg-green-500', 'hover:bg-green-600'); 
-            } else { 
-                btn.disabled = true; 
-                btn.classList.add('bg-gray-400', 'cursor-not-allowed'); 
-                btn.classList.remove('bg-green-500', 'hover:bg-green-600'); 
+            if (btn) {
+                if (isStoreOpen) { 
+                    btn.disabled = false; 
+                    btn.classList.remove('bg-gray-400', 'cursor-not-allowed'); 
+                    btn.classList.add('bg-green-500', 'hover:bg-green-600'); 
+                } else { 
+                    btn.disabled = true; 
+                    btn.classList.add('bg-gray-400', 'cursor-not-allowed'); 
+                    btn.classList.remove('bg-green-500', 'hover:bg-green-600'); 
+                }
             }
         });
     }
