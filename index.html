@@ -489,6 +489,7 @@
     }
 
     function carregarVendasAdmin(startDate, endDate) {
+        initialVendasLoadComplete = false;
         const tableBody = document.getElementById('vendas-table-body');
         let q = query(collection(db, "vendas"), orderBy("timestamp", "desc"));
 
@@ -543,7 +544,7 @@
             document.querySelectorAll('.delete-venda-btn').forEach(btn => btn.addEventListener('click', e => deletarVenda(e.currentTarget.dataset.id)));
             
             if (!initialVendasLoadComplete) {
-                setTimeout(() => { initialVendasLoadComplete = true; }, 1000);
+                setTimeout(() => { initialVendasLoadComplete = true; }, 2000);
             }
         });
     }
@@ -682,7 +683,9 @@
         const avisoLojaFechada = document.getElementById('loja-fechada-aviso');
         const msgLojaFechada = document.getElementById('mensagem-loja-fechada');
 
-        if (!configDia || !configDia.aberto) { isStoreOpen = false; } else {
+        if (!configDia || !configDia.aberto || !configDia.abertura || !configDia.fechamento) { 
+            isStoreOpen = true; // Assume a loja aberta se não houver configuração
+        } else {
             const [aberturaH, aberturaM] = configDia.abertura.split(':').map(Number);
             const [fechamentoH, fechamentoM] = configDia.fechamento.split(':').map(Number);
             const aberturaTotal = aberturaH * 60 + aberturaM;
