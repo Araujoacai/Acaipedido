@@ -46,6 +46,11 @@
         <p class="font-bold text-pink-600 tracking-wide">ACOMPANHAMENTOS</p>
         <p class="text-gray-700">3 porções por copo | Adicional R$3 por porção extra</p>
     </div>
+    
+    <div id="loja-fechada-aviso" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6" role="alert">
+        <p class="font-bold">Loja Fechada</p>
+        <p id="mensagem-loja-fechada"></p>
+    </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
         <!-- Coluna Esquerda: Pedido -->
@@ -53,6 +58,7 @@
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2><div id="tamanhos-container" class="flex flex-col sm:flex-row gap-3"><p class="text-gray-500">A carregar tamanhos...</p></div></div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center"><img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img"> Quantidade</h2><input type="number" id="quantidade" min="1" value="1" class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400"></div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2><input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📞 Telefone/WhatsApp</h2><input type="tel" id="telefone-cliente" placeholder="Seu número para contato" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2><textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea></div>
         </div>
         <!-- Coluna Direita: Acompanhamentos -->
@@ -84,7 +90,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
@@ -104,7 +110,7 @@
     let unsubscribeVendas;
     let unsubscribeFluxoCaixa;
     let storeSettings = {};
-    let isStoreOpen = false;
+    let isStoreOpen = true; // Assume a loja aberta por defeito
     let initialVendasLoadComplete = false;
 
     const menuContainer = document.getElementById('menu-container');
@@ -229,6 +235,7 @@
         });
         document.getElementById('quantidade').value = 1;
         document.getElementById('nome-cliente').value = '';
+        document.getElementById('telefone-cliente').value = '';
         document.getElementById('observacoes').value = '';
         calcularValor();
     }
@@ -247,6 +254,8 @@
         if (quantidade < 1) { showModal("Por favor, informe a quantidade!"); return; }
         const nomeCliente = document.getElementById('nome-cliente').value.trim();
         if (!nomeCliente) { showModal("Por favor, digite seu nome!"); return; }
+        const telefoneCliente = document.getElementById('telefone-cliente').value.trim();
+        if (!telefoneCliente) { showModal("Por favor, digite seu telefone!"); return; }
         
         const acompanhamentosSelecionados = [];
         document.querySelectorAll('.acompanhamento-check:checked').forEach(check => {
@@ -260,14 +269,45 @@
         
         const observacoes = document.getElementById("observacoes").value;
         const valor = document.getElementById("valor-mobile").innerText;
-        const orderId = 'ACAI-' + Date.now().toString().slice(-6);
-        const numero = "5514991962607";
-        const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${acompanhamentosSelecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
+        
+        const counterRef = doc(db, "configuracoes", "dailyCounter");
+        let orderId;
+        try {
+            orderId = await runTransaction(db, async (transaction) => {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const todayStr = `${yyyy}-${mm}-${dd}`;
+                const displayDate = `${dd}${mm}`;
+
+                const counterDoc = await transaction.get(counterRef);
+                let newCount = 1;
+                if (counterDoc.exists() && counterDoc.data().lastOrderDate === todayStr) {
+                    newCount = counterDoc.data().lastOrderNumber + 1;
+                }
+                
+                transaction.set(counterRef, { 
+                    lastOrderNumber: newCount,
+                    lastOrderDate: todayStr 
+                });
+
+                const paddedCount = String(newCount).padStart(3, '0');
+                return `${displayDate}-${paddedCount}`;
+            });
+        } catch (e) {
+            console.error("Transaction failed: ", e);
+            showModal("Não foi possível gerar o ID do pedido. Tente novamente.");
+            return;
+        }
+
+        const numero = "551499196607";
+        const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${acompanhamentosSelecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 
         try { 
-            await addDoc(collection(db, "vendas"), { orderId, nomeCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); 
+            await addDoc(collection(db, "vendas"), { orderId, nomeCliente, telefoneCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); 
             showModal("Pedido enviado com sucesso! Agradecemos a preferência.");
             resetarFormulario();
         } catch (e) { 
@@ -486,7 +526,7 @@
                         <tr class="border-b">
                             <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
                             <td class="p-3 text-sm">${data}</td>
-                            <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}</td>
+                            <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
                             <td class="p-3 text-sm">${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${venda.acompanhamentos.join(', ')}</small></td>
                             <td class="p-3 font-medium">${venda.total}</td>
                             <td class="p-3 font-semibold ${statusClass} capitalize">${venda.status}</td>
@@ -638,6 +678,10 @@
         const diaSemana = dias[agora.getDay()];
         const horaAtual = agora.getHours() * 60 + agora.getMinutes();
         const configDia = storeSettings[diaSemana];
+        
+        const avisoLojaFechada = document.getElementById('loja-fechada-aviso');
+        const msgLojaFechada = document.getElementById('mensagem-loja-fechada');
+
         if (!configDia || !configDia.aberto) { isStoreOpen = false; } else {
             const [aberturaH, aberturaM] = configDia.abertura.split(':').map(Number);
             const [fechamentoH, fechamentoM] = configDia.fechamento.split(':').map(Number);
@@ -653,10 +697,13 @@
                     btn.disabled = false; 
                     btn.classList.remove('bg-gray-400', 'cursor-not-allowed'); 
                     btn.classList.add('bg-green-500', 'hover:bg-green-600'); 
+                    avisoLojaFechada.classList.add('hidden');
                 } else { 
                     btn.disabled = true; 
                     btn.classList.add('bg-gray-400', 'cursor-not-allowed'); 
                     btn.classList.remove('bg-green-500', 'hover:bg-green-600'); 
+                    avisoLojaFechada.classList.remove('hidden');
+                    msgLojaFechada.innerText = storeSettings.mensagemFechado || "Estamos fechados no momento.";
                 }
             }
         });
