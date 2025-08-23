@@ -301,7 +301,7 @@
             return;
         }
 
-        const numero = "551499196607";
+        const numero = "5514991962607";
         const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\nAcompanhamentos:\n- ${acompanhamentosSelecionados.join("\n- ")}\n\n📝 Observações: ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
         
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
