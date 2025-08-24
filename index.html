@@ -173,7 +173,7 @@
         const containers = { tamanho: document.getElementById('tamanhos-container'), fruta: document.getElementById('frutas-container'), creme: document.getElementById('cremes-container'), outro: document.getElementById('outros-container') };
         Object.values(containers).forEach(c => c.innerHTML = '');
         precosBase = {};
-        const produtosVisiveis = produtos.filter(p => p.category !== 'insumo');
+        const produtosVisiveis = produtos.filter(p => p.category !== 'insumo' && p.isActive !== false);
         if (produtosVisiveis.length === 0) { Object.values(containers).forEach(c => c.innerHTML = '<p class="text-red-500 text-sm col-span-2">Nenhum item. Faça login como admin para adicionar produtos.</p>'); return; }
         
         produtosVisiveis.forEach(p => {
