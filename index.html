@@ -454,6 +454,7 @@
             unit: document.getElementById('produto-unidade').value,
             iconUrl: document.getElementById('produto-icone').value, 
             category: document.getElementById('produto-categoria').value,
+            isActive: true
         };
         if (!produto.name || !produto.unit) { showModal("Nome e Unidade são obrigatórios."); return; }
         
@@ -464,8 +465,9 @@
         try {
             if (id) { 
                 const existingProd = produtos.find(p => p.id === id);
-                if (existingProd && existingProd.recipe) {
-                    produto.recipe = existingProd.recipe; // Preserve existing recipe on update
+                if (existingProd) {
+                    produto.recipe = existingProd.recipe || []; // Preserve existing recipe on update
+                    produto.isActive = existingProd.isActive; // Preserve active status
                 }
                 await updateDoc(doc(db, "produtos", id), produto); 
             } else { 
@@ -487,13 +489,18 @@
                 const grid = document.createElement('div');
                 grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
                 produtosPorCategoria[categoria].forEach(p => {
+                    const isInactive = p.isActive === false;
+                    const activeBtnClass = isInactive ? 'bg-gray-400' : 'bg-green-500';
+                    const activeBtnIcon = isInactive ? '🚫' : '👁️';
+
                     grid.innerHTML += `
-                    <div class="border p-3 rounded-lg flex justify-between items-center">
+                    <div class="border p-3 rounded-lg flex justify-between items-center ${isInactive ? 'opacity-50' : ''}">
                         <div>
                             <p class="font-bold">${p.name}</p>
                             <p class="text-sm text-gray-600">Venda: R$${(p.price || 0).toFixed(2)} | Custo: R$${(p.cost || 0).toFixed(2)} / ${p.unit}</p>
                         </div>
-                        <div>
+                        <div class="flex items-center">
+                            ${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1 text-white rounded ${activeBtnClass}" data-id="${p.id}">${activeBtnIcon}</button>` : ''}
                             ${p.category === 'tamanho' ? `<button class="recipe-btn p-1 text-green-500" data-id="${p.id}">⚙️</button>` : ''}
                             <button class="edit-produto-btn p-1 text-blue-500" data-id="${p.id}">✏️</button>
                             <button class="delete-produto-btn p-1 text-red-500" data-id="${p.id}">🗑️</button>
@@ -506,6 +513,7 @@
             document.querySelectorAll('.edit-produto-btn').forEach(btn => btn.addEventListener('click', (e) => editarProduto(e.currentTarget.dataset.id)));
             document.querySelectorAll('.delete-produto-btn').forEach(btn => btn.addEventListener('click', (e) => deletarProduto(e.currentTarget.dataset.id)));
             document.querySelectorAll('.recipe-btn').forEach(btn => btn.addEventListener('click', (e) => openRecipeModal(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.toggle-active-btn').forEach(btn => btn.addEventListener('click', (e) => toggleProductStatus(e.currentTarget.dataset.id)));
         });
     }
     
@@ -529,6 +537,19 @@
                 try { await deleteDoc(doc(db, "produtos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir produto:", error); closeModal(); showModal('Ocorreu um erro ao excluir o produto.'); }
             });
         });
+    }
+
+    async function toggleProductStatus(id) {
+        const product = produtos.find(p => p.id === id);
+        if (product) {
+            const newStatus = !(product.isActive !== false); // Handles undefined as true
+            try {
+                await updateDoc(doc(db, "produtos", id), { isActive: newStatus });
+            } catch (error) {
+                console.error("Erro ao atualizar status:", error);
+                showModal("Não foi possível atualizar o status do produto.");
+            }
+        }
     }
 
     function showToast(message) {
