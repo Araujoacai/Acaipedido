@@ -1,0 +1,38 @@
+body {
+  scroll-behavior: smooth;
+}
+
+input[type=checkbox], input[type=radio] {
+  width: 1.4em;
+  height: 1.4em;
+}
+
+.card-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  margin-right: 8px;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tab-active {
+  border-color: #9333ea;
+  background-color: #f3e8ff;
+  color: #9333ea;
+}
+
+@keyframes slide-down {
+  from { top: -100px; opacity: 0; }
+  to { top: 20px; opacity: 1; }
+}
+
+.toast-notification {
+  animation: slide-down 0.5s ease-out forwards;
+}
