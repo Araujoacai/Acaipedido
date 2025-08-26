@@ -52,6 +52,14 @@
         <p id="mensagem-loja-fechada"></p>
     </div>
 
+    <!-- NOVA SEÇÃO DE COMBOS -->
+    <div id="combos-section" class="mb-8 hidden">
+        <h2 class="text-2xl font-bold text-center text-purple-800 mb-4">🔥 Combos Imperdíveis</h2>
+        <div id="combos-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Combos serão inseridos aqui -->
+        </div>
+    </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
         <!-- Coluna Esquerda: Pedido -->
         <div>
@@ -112,11 +120,12 @@
     const db = getFirestore(app);
 
     let produtos = [];
+    let combos = []; // Variável para armazenar os combos
     let precosBase = {};
     let unsubscribeVendas;
     let unsubscribeFluxoCaixa;
     let storeSettings = {};
-    let isStoreOpen = true; // Assume a loja aberta por defeito
+    let isStoreOpen = true; 
     let initialVendasLoadComplete = false;
 
     const menuContainer = document.getElementById('menu-container');
@@ -210,6 +219,34 @@
         });
         document.querySelectorAll('input, textarea').forEach(el => { el.addEventListener("change", calcularValor); el.addEventListener("input", calcularValor); });
         document.getElementById('apenas-acai-check').addEventListener('change', calcularValor);
+    }
+
+    function renderCombosMenu() {
+        const container = document.getElementById('combos-container');
+        const section = document.getElementById('combos-section');
+        container.innerHTML = '';
+
+        const combosAtivos = combos.filter(c => c.isActive !== false);
+
+        if(combosAtivos.length === 0) {
+            section.classList.add('hidden');
+            return;
+        }
+
+        section.classList.remove('hidden');
+        combosAtivos.forEach(combo => {
+            container.innerHTML += `
+                <div class="bg-gradient-to-br from-purple-100 to-pink-100 p-4 rounded-2xl shadow-md flex flex-col">
+                    <img src="${combo.imageUrl || 'https://placehold.co/600x400/f3e8ff/9333ea?text=Combo'}" alt="${combo.name}" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h4 class="text-lg font-bold text-purple-800">${combo.name}</h4>
+                    <p class="text-sm text-gray-600 flex-grow">${combo.description}</p>
+                    <div class="flex justify-between items-center mt-3">
+                        <span class="text-xl font-bold text-green-600">R$${(combo.price || 0).toFixed(2).replace('.', ',')}</span>
+                        <button onclick="window.pedirCombo('${combo.id}')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">Pedir</button>
+                    </div>
+                </div>
+            `;
+        });
     }
 
     function calcularValor() {
@@ -338,29 +375,102 @@
             showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp."); 
         }
     }
+    
     window.closeModal = closeModal;
+
+    window.pedirCombo = async (comboId) => {
+        if (!isStoreOpen) {
+            showModal(storeSettings.mensagemFechado || "Desculpe, estamos fechados no momento.");
+            return;
+        }
+        const combo = combos.find(c => c.id === comboId);
+        if (!combo) return;
+
+        const nomeCliente = document.getElementById('nome-cliente').value.trim();
+        if (!nomeCliente) { showModal("Por favor, preencha seu nome no formulário principal antes de pedir um combo!"); return; }
+        const telefoneCliente = document.getElementById('telefone-cliente').value.trim();
+        if (!telefoneCliente) { showModal("Por favor, preencha seu telefone no formulário principal antes de pedir um combo!"); return; }
+        
+        const counterRef = doc(db, "configuracoes", "dailyCounter");
+        let orderId;
+        try {
+            orderId = await runTransaction(db, async (transaction) => {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const todayStr = `${yyyy}-${mm}-${dd}`;
+                const displayDate = `${dd}${mm}`;
+
+                const counterDoc = await transaction.get(counterRef);
+                let newCount = 1;
+                if (counterDoc.exists() && counterDoc.data().lastOrderDate === todayStr) {
+                    newCount = counterDoc.data().lastOrderNumber + 1;
+                }
+                
+                transaction.set(counterRef, { lastOrderNumber: newCount, lastOrderDate: todayStr });
+                const paddedCount = String(newCount).padStart(3, '0');
+                return `${displayDate}-${paddedCount}`;
+            });
+        } catch (e) {
+            console.error("Transaction failed: ", e);
+            showModal("Não foi possível gerar o ID do pedido. Tente novamente.");
+            return;
+        }
+
+        const numero = storeSettings.whatsappNumber || "5514991962607";
+        const valor = `R$${(combo.price || 0).toFixed(2).replace('.', ',')}`;
+        const msg = `*Pedido de Combo: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Gostaria de pedir o *${combo.name}*.\n\n*Descrição:* ${combo.description || ''}\n\n💰 *Valor Total: ${valor}*`;
+        
+        window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
+
+        try {
+            const vendaData = {
+                orderId,
+                nomeCliente,
+                telefoneCliente,
+                pedidoCombo: combo.name, // Campo para identificar que é um combo
+                observacoes: combo.description || "", // FIX: Fallback to empty string if description is undefined
+                total: valor,
+                status: "pendente",
+                timestamp: serverTimestamp(),
+                // Campos nulos para compatibilidade com a estrutura de vendas
+                tamanho: "",
+                quantidade: 1,
+                acompanhamentos: []
+            };
+            await addDoc(collection(db, "vendas"), vendaData);
+            showModal("Pedido do combo enviado com sucesso! Agradecemos a preferência.");
+        } catch (e) {
+            console.error("Erro ao salvar venda do combo: ", e);
+            showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp.");
+        }
+    };
 
     function renderAdminPanel() {
         adminPanel.innerHTML = `
             <h2 class="text-3xl font-bold text-center text-purple-800 mb-6">Painel de Administração</h2>
-            <div class="flex border-b mb-4">
-                <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active">Gerenciar Produtos</button>
-                <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Relatório de Vendas</button>
-                <button id="tab-caixa" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Fluxo de Caixa</button>
-                <button id="tab-config" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent">Configurações</button>
+            <div class="flex border-b mb-4 overflow-x-auto no-scrollbar">
+                <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active flex-shrink-0">Gerenciar Produtos</button>
+                <button id="tab-combos" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Gerenciar Combos</button>
+                <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Relatório de Vendas</button>
+                <button id="tab-caixa" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Fluxo de Caixa</button>
+                <button id="tab-config" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Configurações</button>
             </div>
             <div id="content-produtos"></div>
+            <div id="content-combos" class="hidden"></div>
             <div id="content-vendas" class="hidden"></div>
             <div id="content-caixa" class="hidden"></div>
             <div id="content-config" class="hidden"></div>
         `;
         renderProdutosAdmin();
+        renderCombosAdmin(); // Nova função
         renderVendasAdmin();
         renderCaixaAdmin();
         renderConfigAdmin();
         
-        const tabs = { produtos: document.getElementById('tab-produtos'), vendas: document.getElementById('tab-vendas'), caixa: document.getElementById('tab-caixa'), config: document.getElementById('tab-config') };
-        const contents = { produtos: document.getElementById('content-produtos'), vendas: document.getElementById('content-vendas'), caixa: document.getElementById('content-caixa'), config: document.getElementById('content-config') };
+        const tabs = { produtos: document.getElementById('tab-produtos'), combos: document.getElementById('tab-combos'), vendas: document.getElementById('tab-vendas'), caixa: document.getElementById('tab-caixa'), config: document.getElementById('tab-config') };
+        const contents = { produtos: document.getElementById('content-produtos'), combos: document.getElementById('content-combos'), vendas: document.getElementById('content-vendas'), caixa: document.getElementById('content-caixa'), config: document.getElementById('content-config') };
 
         Object.keys(tabs).forEach(key => {
             tabs[key].addEventListener('click', () => {
@@ -377,6 +487,112 @@
         document.getElementById('salvar-produto-btn').addEventListener('click', salvarProduto);
         carregarProdutosAdmin();
     }
+
+    // ** NOVAS FUNÇÕES PARA GERENCIAR COMBOS **
+    function renderCombosAdmin() {
+        document.getElementById('content-combos').innerHTML = `
+            <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+                <h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Combo</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border rounded-lg">
+                    <input type="hidden" id="combo-id">
+                    <input type="text" id="combo-nome" placeholder="Nome do Combo" class="p-2 border rounded">
+                    <input type="number" id="combo-preco" placeholder="Preço do Combo" step="0.01" class="p-2 border rounded">
+                    <input type="text" id="combo-imagem" placeholder="URL da Imagem" class="p-2 border rounded col-span-full">
+                    <textarea id="combo-descricao" placeholder="Descrição do Combo (Ex: 2 Açaís 500ml...)" class="p-2 border rounded col-span-full" rows="3"></textarea>
+                    <button id="salvar-combo-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-full">Salvar Combo</button>
+                </div>
+                <div id="lista-combos-admin"></div>
+            </div>`;
+        document.getElementById('salvar-combo-btn').addEventListener('click', salvarCombo);
+        carregarCombosAdmin();
+    }
+
+    async function salvarCombo() {
+        const id = document.getElementById('combo-id').value;
+        const combo = { 
+            name: document.getElementById('combo-nome').value, 
+            price: parseFloat(document.getElementById('combo-preco').value) || 0,
+            description: document.getElementById('combo-descricao').value,
+            imageUrl: document.getElementById('combo-imagem').value,
+            isActive: true 
+        };
+        if (!combo.name || !combo.description || combo.price <= 0) { showModal("Nome, Descrição e Preço válido são obrigatórios."); return; }
+        
+        try {
+            if (id) { 
+                 const existingCombo = combos.find(c => c.id === id);
+                 if(existingCombo) combo.isActive = existingCombo.isActive;
+                 await updateDoc(doc(db, "combos", id), combo); 
+            } else { await addDoc(collection(db, "combos"), combo); }
+            document.getElementById('combo-id').value = ''; document.getElementById('combo-nome').value = ''; document.getElementById('combo-preco').value = ''; document.getElementById('combo-descricao').value = ''; document.getElementById('combo-imagem').value = '';
+        } catch (error) { console.error("Erro ao salvar combo:", error); showModal("Não foi possível salvar o combo."); }
+    }
+
+    function carregarCombosAdmin() {
+        const container = document.getElementById('lista-combos-admin');
+        onSnapshot(query(collection(db, "combos"), orderBy("name")), (snapshot) => {
+            container.innerHTML = `<h4 class="text-xl font-medium mt-6 mb-2 text-purple-600">Combos Cadastrados</h4>`;
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            if (snapshot.empty) {
+                grid.innerHTML = '<p class="col-span-full text-gray-500">Nenhum combo cadastrado.</p>';
+            }
+            snapshot.forEach(docSnap => {
+                const c = { id: docSnap.id, ...docSnap.data() };
+                const isInactive = c.isActive === false;
+                const activeBtnClass = isInactive ? 'bg-gray-400' : 'bg-green-500';
+                const activeBtnIcon = isInactive ? '🚫' : '👁️';
+
+                grid.innerHTML += `
+                <div class="border p-3 rounded-lg flex justify-between items-start ${isInactive ? 'opacity-50' : ''}">
+                    <div class="flex-grow">
+                        <p class="font-bold">${c.name}</p>
+                        <p class="text-sm text-gray-600">${c.description}</p>
+                        <p class="text-md font-semibold text-green-700 mt-1">R$${(c.price || 0).toFixed(2)}</p>
+                    </div>
+                    <div class="flex flex-col ml-2">
+                        <button class="toggle-combo-btn p-1 text-white rounded mb-1 ${activeBtnClass}" data-id="${c.id}">${activeBtnIcon}</button>
+                        <button class="edit-combo-btn p-1 text-blue-500" data-id="${c.id}">✏️</button>
+                        <button class="delete-combo-btn p-1 text-red-500" data-id="${c.id}">🗑️</button>
+                    </div>
+                </div>`;
+            });
+            container.appendChild(grid);
+
+            document.querySelectorAll('.edit-combo-btn').forEach(btn => btn.addEventListener('click', (e) => editarCombo(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.delete-combo-btn').forEach(btn => btn.addEventListener('click', (e) => deletarCombo(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.toggle-combo-btn').forEach(btn => btn.addEventListener('click', (e) => toggleComboStatus(e.currentTarget.dataset.id)));
+        });
+    }
+
+    function editarCombo(id) {
+        const c = combos.find(combo => combo.id === id);
+        if (c) { 
+            document.getElementById('combo-id').value = c.id; 
+            document.getElementById('combo-nome').value = c.name; 
+            document.getElementById('combo-preco').value = c.price; 
+            document.getElementById('combo-descricao').value = c.description; 
+            document.getElementById('combo-imagem').value = c.imageUrl; 
+        }
+    }
+
+    function deletarCombo(id) {
+        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este combo?</p><button id="confirm-delete-combo-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
+            document.getElementById('confirm-delete-combo-btn').addEventListener('click', async () => {
+                try { await deleteDoc(doc(db, "combos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir combo:", error); closeModal(); showModal('Ocorreu um erro ao excluir o combo.'); }
+            });
+        });
+    }
+
+    async function toggleComboStatus(id) {
+        const combo = combos.find(c => c.id === id);
+        if (combo) {
+            const newStatus = !(combo.isActive !== false);
+            try { await updateDoc(doc(db, "combos", id), { isActive: newStatus }); } 
+            catch (error) { console.error("Erro ao atualizar status:", error); showModal("Não foi possível atualizar o status do combo."); }
+        }
+    }
+    // ** FIM DAS FUNÇÕES DE COMBO **
 
     function renderVendasAdmin() {
         document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
@@ -636,20 +852,30 @@
             } else {
                 snapshot.docs.forEach(docSnap => {
                     const venda = { id: docSnap.id, ...docSnap.data() };
-                    const { custoTotal, lucro } = calcularCustoPedido(venda);
+                    const isCombo = venda.pedidoCombo && !venda.tamanho;
+                    const { custoTotal, lucro } = isCombo ? { custoTotal: 0, lucro: 0 } : calcularCustoPedido(venda);
                     
                     const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
                     if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
 
                     const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
                     const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
+                    
+                    const pedidoHTML = isCombo 
+                        ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>`
+                        : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+
+                    const financeiroHTML = isCombo
+                        ? `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`
+                        : `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+
                     tableBody.innerHTML += `
                         <tr class="border-b">
                             <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
                             <td class="p-3 text-sm">${data}</td>
                             <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
-                            <td class="p-3 text-sm">${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${venda.acompanhamentos.map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small></td>
-                            <td class="p-3 font-medium">Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong></td>
+                            <td class="p-3 text-sm">${pedidoHTML}</td>
+                            <td class="p-3 font-medium">${financeiroHTML}</td>
                             <td class="p-3 font-semibold ${statusClass} capitalize">${venda.status}</td>
                             <td class="p-3">
                                 ${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}
@@ -907,6 +1133,15 @@
     }, (error) => {
         console.error("Erro ao carregar produtos:", error);
         document.getElementById('menu-container').innerHTML = '<p class="text-red-600 text-center">Não foi possível carregar o cardápio.</p>';
+    });
+
+    // Listener para os combos
+    onSnapshot(collection(db, "combos"), (snapshot) => {
+        combos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderCombosMenu();
+    }, (error) => {
+        console.error("Erro ao carregar combos:", error);
+        document.getElementById('combos-section').classList.add('hidden');
     });
   </script>
 </body>
