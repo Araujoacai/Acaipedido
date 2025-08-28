@@ -692,15 +692,23 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
     function calcularCustoPedido(venda) {
         let custoTotal = 0;
         const tamanhoProduto = produtos.find(p => p.name === venda.tamanho && p.category === 'tamanho');
-        if (tamanhoProduto && tamanhoProduto.recipe) {
-            tamanhoProduto.recipe.forEach(ingrediente => {
-                const insumoData = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
-                if (insumoData) {
-                    custoTotal += (ingrediente.quantity || 0) * (insumoData.cost || 0);
-                }
-            });
+
+        if (tamanhoProduto) {
+            // Adiciona o custo base do próprio produto "tamanho" (custo do copo + açaí base)
+            custoTotal += tamanhoProduto.cost || 0;
+
+            // Adiciona o custo dos insumos da ficha técnica (se houver)
+            if (tamanhoProduto.recipe) {
+                tamanhoProduto.recipe.forEach(ingrediente => {
+                    const insumoData = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
+                    if (insumoData) {
+                        custoTotal += (ingrediente.quantity || 0) * (insumoData.cost || 0);
+                    }
+                });
+            }
         }
 
+        // Adiciona o custo dos acompanhamentos selecionados
         if (venda.acompanhamentos) {
             venda.acompanhamentos.forEach(itemPedido => {
                 const acompanhamentoProduto = produtos.find(p => p.name === itemPedido.name);
@@ -710,6 +718,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             });
         }
         
+        // Multiplica o custo de um copo pela quantidade total de copos
         custoTotal *= venda.quantidade;
 
         const valorVenda = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
