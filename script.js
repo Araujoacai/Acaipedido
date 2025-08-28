@@ -326,15 +326,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
                 nomeCliente,
                 telefoneCliente,
                 pedidoCombo: combo.name, // Campo para identificar que é um combo
-                observacoes: combo.description || "", // FIX: Fallback to empty string if description is undefined
+                observacoes: combo.description || "",
                 total: valor,
                 status: "pendente",
                 timestamp: serverTimestamp(),
-                // Campos nulos para compatibilidade com a estrutura de vendas
                 tamanho: "",
                 quantidade: 1,
                 acompanhamentos: []
             };
+            // A LINHA ABAIXO APENAS ADICIONA À COLEÇÃO "vendas". ELA NÃO ADICIONA AO "fluxoCaixa".
             await addDoc(collection(db, "vendas"), vendaData);
             showModal("Pedido do combo enviado com sucesso! Agradecemos a preferência.");
         } catch (e) {
@@ -360,7 +360,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             <div id="content-config" class="hidden"></div>
         `;
         renderProdutosAdmin();
-        renderCombosAdmin(); // Nova função
+        renderCombosAdmin();
         renderVendasAdmin();
         renderCaixaAdmin();
         renderConfigAdmin();
@@ -384,7 +384,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
         carregarProdutosAdmin();
     }
 
-    // ** NOVAS FUNÇÕES PARA GERENCIAR COMBOS **
     function renderCombosAdmin() {
         document.getElementById('content-combos').innerHTML = `
             <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
@@ -488,8 +487,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             catch (error) { console.error("Erro ao atualizar status:", error); showModal("Não foi possível atualizar o status do combo."); }
         }
     }
-    // ** FIM DAS FUNÇÕES DE COMBO **
-
+    
     function renderVendasAdmin() {
         document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
         document.getElementById('gerar-relatorio-btn').addEventListener('click', () => carregarVendasAdmin(document.getElementById('start-date').value, document.getElementById('end-date').value));
@@ -578,8 +576,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             if (id) { 
                 const existingProd = produtos.find(p => p.id === id);
                 if (existingProd) {
-                    produto.recipe = existingProd.recipe || []; // Preserve existing recipe on update
-                    produto.isActive = existingProd.isActive; // Preserve active status
+                    produto.recipe = existingProd.recipe || [];
+                    produto.isActive = existingProd.isActive;
                 }
                 await updateDoc(doc(db, "produtos", id), produto); 
             } else { 
@@ -654,7 +652,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
     async function toggleProductStatus(id) {
         const product = produtos.find(p => p.id === id);
         if (product) {
-            const newStatus = !(product.isActive !== false); // Handles undefined as true
+            const newStatus = !(product.isActive !== false);
             try {
                 await updateDoc(doc(db, "produtos", id), { isActive: newStatus });
             } catch (error) {
@@ -694,10 +692,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
         const tamanhoProduto = produtos.find(p => p.name === venda.tamanho && p.category === 'tamanho');
 
         if (tamanhoProduto) {
-            // Adiciona o custo base do próprio produto "tamanho" (custo do copo + açaí base)
             custoTotal += tamanhoProduto.cost || 0;
-
-            // Adiciona o custo dos insumos da ficha técnica (se houver)
             if (tamanhoProduto.recipe) {
                 tamanhoProduto.recipe.forEach(ingrediente => {
                     const insumoData = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
@@ -708,7 +703,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             }
         }
 
-        // Adiciona o custo dos acompanhamentos selecionados
         if (venda.acompanhamentos) {
             venda.acompanhamentos.forEach(itemPedido => {
                 const acompanhamentoProduto = produtos.find(p => p.name === itemPedido.name);
@@ -718,7 +712,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             });
         }
         
-        // Multiplica o custo de um copo pela quantidade total de copos
         custoTotal *= venda.quantidade;
 
         const valorVenda = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
@@ -757,8 +750,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             } else {
                 snapshot.docs.forEach(docSnap => {
                     const venda = { id: docSnap.id, ...docSnap.data() };
-                    const isCombo = venda.pedidoCombo && !venda.tamanho;
-                    const { custoTotal, lucro } = isCombo ? { custoTotal: 0, lucro: 0 } : calcularCustoPedido(venda);
                     
                     const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
                     if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
@@ -766,13 +757,26 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
                     const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
                     const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
                     
-                    const pedidoHTML = isCombo 
-                        ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>`
-                        : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+                    let pedidoHTML = '';
+                    let financeiroHTML = '';
 
-                    const financeiroHTML = isCombo
-                        ? `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`
-                        : `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                    if (venda.tamanho) {
+                        pedidoHTML = `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+                        const { custoTotal, lucro } = calcularCustoPedido(venda);
+                        if (!isNaN(custoTotal) && !isNaN(lucro)) {
+                             financeiroHTML = `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                        } else {
+                            financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">Erro no cálculo de custo</small>`;
+                        }
+                    } 
+                    else if (venda.pedidoCombo) {
+                        pedidoHTML = `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>`;
+                        financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`;
+                    }
+                    else {
+                        pedidoHTML = `<span class="text-red-500">Pedido com dados inconsistentes</span>`;
+                        financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">N/A</small>`;
+                    }
 
                     tableBody.innerHTML += `
                         <tr class="border-b">
@@ -805,10 +809,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
         const vendaSnap = await getDoc(vendaRef);
         if (vendaSnap.exists()) {
             const venda = vendaSnap.data();
+            
+            // Impede que uma venda já concluída seja adicionada ao caixa novamente
+            if (venda.status !== 'pendente') {
+                return;
+            }
+
             const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
             
             await addDoc(collection(db, "fluxoCaixa"), {
-                descricao: `Venda Pedido #${venda.orderId}`,
+                descricao: `Venda Pedido #${venda.orderId || venda.pedidoCombo}`,
                 valor: valorNumerico,
                 tipo: 'entrada',
                 timestamp: serverTimestamp()
@@ -939,7 +949,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
         const msgLojaFechada = document.getElementById('mensagem-loja-fechada');
 
         if (!configDia || !configDia.aberto || !configDia.abertura || !configDia.fechamento) { 
-            isStoreOpen = true; // Assume a loja aberta se não houver configuração
+            isStoreOpen = true;
         } else {
             const [aberturaH, aberturaM] = configDia.abertura.split(':').map(Number);
             const [fechamentoH, fechamentoM] = configDia.fechamento.split(':').map(Number);
@@ -1040,7 +1050,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
         document.getElementById('menu-container').innerHTML = '<p class="text-red-600 text-center">Não foi possível carregar o cardápio.</p>';
     });
 
-    // Listener para os combos
     onSnapshot(collection(db, "combos"), (snapshot) => {
         combos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         renderCombosMenu();
