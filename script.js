@@ -757,8 +757,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
             } else {
                 snapshot.docs.forEach(docSnap => {
                     const venda = { id: docSnap.id, ...docSnap.data() };
-                    const isCombo = venda.pedidoCombo && !venda.tamanho;
-                    const { custoTotal, lucro } = isCombo ? { custoTotal: 0, lucro: 0 } : calcularCustoPedido(venda);
                     
                     const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
                     if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
@@ -766,13 +764,31 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
                     const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
                     const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
                     
-                    const pedidoHTML = isCombo 
-                        ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>`
-                        : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+                    let pedidoHTML = '';
+                    let financeiroHTML = '';
 
-                    const financeiroHTML = isCombo
-                        ? `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`
-                        : `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                    // Um pedido de açaí normal DEVE ter um "tamanho"
+                    if (venda.tamanho) {
+                        pedidoHTML = `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+                        
+                        const { custoTotal, lucro } = calcularCustoPedido(venda);
+                        
+                        if (!isNaN(custoTotal) && !isNaN(lucro)) {
+                             financeiroHTML = `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                        } else {
+                            financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">Erro no cálculo de custo</small>`;
+                        }
+                    } 
+                    // Um pedido de combo DEVE ter "pedidoCombo"
+                    else if (venda.pedidoCombo) {
+                        pedidoHTML = `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>`;
+                        financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`;
+                    }
+                    // Tratamento para dados inconsistentes
+                    else {
+                        pedidoHTML = `<span class="text-red-500">Pedido com dados inconsistentes</span>`;
+                        financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">N/A</small>`;
+                    }
 
                     tableBody.innerHTML += `
                         <tr class="border-b">
