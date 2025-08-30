@@ -752,6 +752,10 @@ async function deletarVenda(orderId) {
 // Ex: renderConfigAdmin, renderCaixaAdmin, salvarProduto, carregarProdutosAdmin, etc.
 // Elas não precisam de alterações.
 // ==========================================================
+
+
+// ... (o restante do seu código, como salvarConfiguracoes, carregarFluxoCaixa, checkStoreOpen, etc., continua aqui)
+// ... Certifique-se de colar TODO o resto do seu código original para que nada se perca.
  async function salvarConfiguracoes() {
         const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const settings = { 
@@ -972,7 +976,3 @@ async function deletarVenda(orderId) {
         console.error("Erro ao carregar combos:", error);
         document.getElementById('combos-section').classList.add('hidden');
     });
-
-
-// ... (o restante do seu código, como salvarConfiguracoes, carregarFluxoCaixa, checkStoreOpen, etc., continua aqui)
-// ... Certifique-se de colar TODO o resto do seu código original para que nada se perca.
