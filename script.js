@@ -536,223 +536,124 @@ function renderAdminPanel() {
 // ... (renderProdutosAdmin, renderCombosAdmin, e todas as funções de salvar/carregar/deletar produtos e combos continuam as mesmas)
 // COLE SEU CÓDIGO EXISTENTE PARA ESSAS FUNÇÕES AQUI
 
-// ATUALIZAÇÃO NECESSÁRIA PARA A FUNÇÃO carregarVendasAdmin E CONFIRM/DELETE
-function renderVendasAdmin() {
-    document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">Pedido</th><th class="p-3">Item</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
-    document.getElementById('gerar-relatorio-btn').addEventListener('click', () => carregarVendasAdmin(document.getElementById('start-date').value, document.getElementById('end-date').value));
-    carregarVendasAdmin();
-}
-
-
-function calcularCustoPedido(venda) {
-    let custoTotal = 0;
-    const tamanhoProduto = produtos.find(p => p.name === venda.tamanho && p.category === 'tamanho');
-
-    if (tamanhoProduto) {
-        custoTotal += tamanhoProduto.cost || 0;
-        if (tamanhoProduto.recipe) {
-            tamanhoProduto.recipe.forEach(ingrediente => {
-                const insumoData = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
-                if (insumoData) {
-                    custoTotal += (ingrediente.quantity || 0) * (insumoData.cost || 0);
-                }
-            });
-        }
-    }
-
-    if (venda.acompanhamentos) {
-        venda.acompanhamentos.forEach(itemPedido => {
-            const acompanhamentoProduto = produtos.find(p => p.name === itemPedido.name);
-            if (acompanhamentoProduto) {
-                custoTotal += (itemPedido.quantity || 0) * (acompanhamentoProduto.cost || 0);
-            }
-        });
-    }
-    
-    custoTotal *= (venda.quantidade || 1);
-
-    const valorVenda = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
-    const lucro = valorVenda - custoTotal;
-
-    return { custoTotal, lucro };
-}
-
-
 function carregarVendasAdmin(startDate, endDate) {
-    initialVendasLoadComplete = false;
-    const tableBody = document.getElementById('vendas-table-body');
-    let q = query(collection(db, "vendas"), orderBy("timestamp", "desc"));
+        initialVendasLoadComplete = false;
+        const tableBody = document.getElementById('vendas-table-body');
+        let q = query(collection(db, "vendas"), orderBy("timestamp", "desc"));
 
-    if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        q = query(collection(db, "vendas"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
-    }
-    
-    if (unsubscribeVendas) unsubscribeVendas();
-
-    unsubscribeVendas = onSnapshot(q, (snapshot) => {
-        if (initialVendasLoadComplete && snapshot.docChanges().some(change => change.type === 'added')) {
-            playNotificationSound();
-            showToast("Novo Pedido Recebido!");
-            document.getElementById('tab-vendas').click();
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            q = query(collection(db, "vendas"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
         }
         
-        let totalVendas = 0;
-        const pedidosAgrupados = new Map();
+        if (unsubscribeVendas) unsubscribeVendas();
 
-        snapshot.docs.forEach(docSnap => {
-            const venda = { id: docSnap.id, ...docSnap.data() };
-            const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
-            if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
-
-            if (!pedidosAgrupados.has(venda.orderId)) {
-                pedidosAgrupados.set(venda.orderId, {
-                    cliente: venda.nomeCliente,
-                    telefone: venda.telefoneCliente,
-                    timestamp: venda.timestamp,
-                    itens: [],
-                    status: 'pendente', // Assume pendente, muda se algum item for concluído
-                    valorTotal: 0
-                });
+        unsubscribeVendas = onSnapshot(q, (snapshot) => {
+            if (initialVendasLoadComplete && snapshot.docChanges().some(change => change.type === 'added')) {
+                playNotificationSound();
+                showToast("Novo Pedido Recebido!");
+                document.getElementById('tab-vendas').click();
             }
-            const pedido = pedidosAgrupados.get(venda.orderId);
-            pedido.itens.push(venda);
-            if(venda.status === 'concluida') pedido.status = 'concluida';
-            pedido.valorTotal += valorNumerico;
-        });
+            
+            tableBody.innerHTML = '';
+            let totalVendas = 0;
 
-        tableBody.innerHTML = '';
-        if (pedidosAgrupados.size === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Nenhuma venda encontrada.</td></tr>';
-        } else {
-            for (const [orderId, pedido] of pedidosAgrupados.entries()) {
-                const data = pedido.timestamp ? new Date(pedido.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
-                const statusClass = pedido.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
-                
-                const masterRowHTML = `
-                    <tr class="bg-gray-50 border-b-2 border-gray-300">
-                        <td class="p-3 font-bold">
-                            <span class="block text-purple-800">${orderId || 'N/A'}</span>
-                            <span class="block text-sm font-semibold">${pedido.cliente || 'N/A'}</span>
-                            <span class="block text-xs font-normal text-gray-500">${data}</span>
-                        </td>
-                        <td colspan="2" class="p-3 text-right font-bold text-lg text-purple-800">
-                            Total Pedido: R$${pedido.valorTotal.toFixed(2).replace('.',',')}
-                        </td>
-                         <td class="p-3 font-semibold ${statusClass} capitalize">${pedido.status}</td>
-                        <td class="p-3">
-                            ${pedido.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-order-id="${orderId}">✔️ Confirmar</button>` : ''}
-                            <button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-order-id="${orderId}">🗑️ Excluir</button>
-                        </td>
-                    </tr>
-                `;
-                tableBody.innerHTML += masterRowHTML;
-                
-                pedido.itens.forEach(item => {
-                    let itemHTML = '';
+            if (snapshot.empty) { 
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Nenhuma venda encontrada.</td></tr>';
+                document.getElementById('total-vendas').innerText = 'R$0,00';
+            } else {
+                snapshot.docs.forEach(docSnap => {
+                    const venda = { id: docSnap.id, ...docSnap.data() };
+                    
+                    const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+                    if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
+
+                    const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
+                    const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
+                    
+                    let pedidoHTML = '';
                     let financeiroHTML = '';
-                    if (item.tamanho) { // É um copo
-                        itemHTML = `${item.tamanho}<br><small class="text-gray-500">${(item.acompanhamentos || []).map(a => `${a.name}(x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${item.observacoes}</small>`;
-                        const { custoTotal, lucro } = calcularCustoPedido(item);
-                        financeiroHTML = `Venda: ${item.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
-                    } else if (item.pedidoCombo) { // É um combo
-                        itemHTML = `<strong>Combo:</strong> ${item.pedidoCombo}<br><small class="text-gray-500">${item.observacoes}</small>`;
-                        financeiroHTML = `Venda: ${item.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`;
+
+                    if (venda.tamanho) {
+                        pedidoHTML = `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+                        const { custoTotal, lucro } = calcularCustoPedido(venda);
+                        if (!isNaN(custoTotal) && !isNaN(lucro)) {
+                             financeiroHTML = `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                        } else {
+                            financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">Erro no cálculo de custo</small>`;
+                        }
+                    } 
+                    else if (venda.pedidoCombo) {
+                        pedidoHTML = `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>`;
+                        financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>`;
+                    }
+                    else {
+                        pedidoHTML = `<span class="text-red-500">Pedido com dados inconsistentes</span>`;
+                        financeiroHTML = `Venda: ${venda.total}<br><small class="text-gray-500">N/A</small>`;
                     }
 
                     tableBody.innerHTML += `
                         <tr class="border-b">
-                            <td class="p-3"></td>
-                            <td class="p-3 text-sm">${itemHTML}</td>
+                            <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
+                            <td class="p-3 text-sm">${data}</td>
+                            <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
+                            <td class="p-3 text-sm">${pedidoHTML}</td>
                             <td class="p-3 font-medium">${financeiroHTML}</td>
-                            <td colspan="2"></td>
-                        </tr>
-                    `;
+                            <td class="p-3 font-semibold ${statusClass} capitalize">${venda.status}</td>
+                            <td class="p-3">
+                                ${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}
+                                <button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button>
+                            </td>
+                        </tr>`;
                 });
+                document.getElementById('total-vendas').innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
             }
-        }
-        
-        document.getElementById('total-vendas').innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
 
-        document.querySelectorAll('.confirm-venda-btn').forEach(btn => btn.addEventListener('click', e => confirmarVenda(e.currentTarget.dataset.orderId)));
-        document.querySelectorAll('.delete-venda-btn').forEach(btn => btn.addEventListener('click', e => deletarVenda(e.currentTarget.dataset.orderId)));
-        
-        if (!initialVendasLoadComplete) {
-            setTimeout(() => { initialVendasLoadComplete = true; }, 2000);
-        }
-    });
-}
-
-async function confirmarVenda(orderId) {
-    if(!orderId) return;
-
-    const q = query(collection(db, "vendas"), where("orderId", "==", orderId), where("status", "==", "pendente"));
-    const querySnapshot = await getDocs(q);
-    
-    if(querySnapshot.empty) return;
-
-    let valorTotalPedido = 0;
-    let descricaoPedido = `Venda Pedido #${orderId}`;
-
-    querySnapshot.forEach(docSnap => {
-        const venda = docSnap.data();
-        const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
-        if(!isNaN(valorNumerico)) valorTotalPedido += valorNumerico;
-    });
-
-    try {
-        await addDoc(collection(db, "fluxoCaixa"), {
-            descricao: descricaoPedido,
-            valor: valorTotalPedido,
-            tipo: 'entrada',
-            timestamp: serverTimestamp()
+            document.querySelectorAll('.confirm-venda-btn').forEach(btn => btn.addEventListener('click', e => confirmarVenda(e.currentTarget.dataset.id)));
+            document.querySelectorAll('.delete-venda-btn').forEach(btn => btn.addEventListener('click', e => deletarVenda(e.currentTarget.dataset.id)));
+            
+            if (!initialVendasLoadComplete) {
+                setTimeout(() => { initialVendasLoadComplete = true; }, 2000);
+            }
         });
-
-        const batch = writeBatch(db);
-        querySnapshot.forEach(docSnap => {
-            batch.update(docSnap.ref, { status: 'concluida' });
-        });
-        await batch.commit();
-    } catch (error) {
-        console.error("Erro ao confirmar venda: ", error);
-        showModal("Ocorreu um erro ao confirmar a venda.");
     }
-}
 
-async function deletarVenda(orderId) {
-    if(!orderId) return;
-
-    const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir TODOS os itens do pedido ${orderId}?</p><button id="confirm-delete-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
-    
-    showModal(confirmationHTML, () => {
-        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-            try {
-                const q = query(collection(db, "vendas"), where("orderId", "==", orderId));
-                const querySnapshot = await getDocs(q);
-                
-                const batch = writeBatch(db);
-                querySnapshot.forEach(docSnap => {
-                    batch.delete(docSnap.ref);
-                });
-                await batch.commit();
-                
-                closeModal();
-            } catch (error) {
-                console.error("Erro ao excluir venda:", error);
-                closeModal();
-                showModal('Ocorreu um erro ao excluir a venda.');
+    async function confirmarVenda(id) {
+        const vendaRef = doc(db, "vendas", id);
+        const vendaSnap = await getDoc(vendaRef);
+        if (vendaSnap.exists()) {
+            const venda = vendaSnap.data();
+            
+            // Impede que uma venda já concluída seja adicionada ao caixa novamente
+            if (venda.status !== 'pendente') {
+                return;
             }
+
+            const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+            
+            await addDoc(collection(db, "fluxoCaixa"), {
+                descricao: `Venda Pedido #${venda.orderId || venda.pedidoCombo}`,
+                valor: valorNumerico,
+                tipo: 'entrada',
+                timestamp: serverTimestamp()
+            });
+
+            await updateDoc(vendaRef, { status: 'concluida' });
+        }
+    }
+
+    function deletarVenda(id) {
+        const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir esta venda?</p><button id="confirm-delete-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        showModal(confirmationHTML, () => {
+            document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+                try { await deleteDoc(doc(db, "vendas", id)); closeModal(); } catch (error) { console.error("Erro ao excluir venda:", error); closeModal(); showModal('Ocorreu um erro ao excluir a venda.'); }
+            });
         });
-    });
-}
-// ==========================================================
-// COLE AQUI O RESTANTE DAS SUAS FUNÇÕES DO PAINEL ADMIN
-// Ex: renderConfigAdmin, renderCaixaAdmin, salvarProduto, carregarProdutosAdmin, etc.
-// Elas não precisam de alterações.
-// ==========================================================
- async function salvarConfiguracoes() {
+    }
+    
+    async function salvarConfiguracoes() {
         const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
         const settings = { 
             mensagemFechado: document.getElementById('mensagem-fechado').value,
@@ -972,7 +873,3 @@ async function deletarVenda(orderId) {
         console.error("Erro ao carregar combos:", error);
         document.getElementById('combos-section').classList.add('hidden');
     });
-
-
-// ... (o restante do seu código, como salvarConfiguracoes, carregarFluxoCaixa, checkStoreOpen, etc., continua aqui)
-// ... Certifique-se de colar TODO o resto do seu código original para que nada se perca.
