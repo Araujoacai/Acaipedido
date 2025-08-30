@@ -1,231 +1,157 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+// ===================== CONFIGURAÇÃO FIREBASE =====================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
-    authDomain: "salvapropagandas.firebaseapp.com",
-    projectId: "salvapropagandas",
-    storageBucket: "salvapropagandas.appspot.com",
-    messagingSenderId: "285635693052",
-    appId: "1:285635693052:web:260476698696d303be0a79"
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_PROJETO.firebaseapp.com",
+  projectId: "SEU_PROJETO",
+  storageBucket: "SEU_PROJETO.appspot.com",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-let produtos = [];
+// ===================== VARIÁVEIS GLOBAIS =====================
+let pedidos = [];
 let combos = [];
-let precosBase = {};
-let unsubscribeVendas;
-let unsubscribeFluxoCaixa;
-let storeSettings = {};
-let isStoreOpen = true;
-let initialVendasLoadComplete = false;
+let acompanhamentos = [];
+let vendas = [];
+let caixa = [];
 
-// --- NOVA ESTRUTURA PARA GERENCIAR O PEDIDO ---
-let pedidoAtual = []; // Array para guardar os objetos de cada copo
-let copoAtualIndex = 0; // Índice do copo que está sendo editado
+// ===================== FUNÇÕES DE UI =====================
+function renderCombosMenu() {
+  const container = document.getElementById('combos-container');
+  const section = document.getElementById('combos-section');
+  container.innerHTML = '';
 
-const menuContainer = document.getElementById('menu-container');
-const adminPanel = document.getElementById('admin-panel');
-const whatsappBar = document.getElementById('whatsapp-bar');
-const adminLoginBtn = document.getElementById('admin-login-button');
-const adminLogoutBtn = document.getElementById('admin-logout-button');
-const modalContainer = document.getElementById('modal-container');
-const sendOrderBtnMobile = document.getElementById('send-order-button-mobile');
-const sendOrderBtnDesktop = document.getElementById('send-order-button-desktop');
+  const combosAtivos = combos.filter(c => c.isActive !== false);
 
-// Função para inicializar o pedido com um copo
-function inicializarPedido() {
-    pedidoAtual = [{
-        tamanho: null,
-        acompanhamentos: [],
-        apenasAcai: false,
-        observacoes: '',
-        preco: 0
-    }];
-    copoAtualIndex = 0;
-    document.getElementById('quantidade').value = 1;
-    atualizarFormularioParaCopoAtual();
-    renderizarResumoPedido();
-    calcularValor();
+  if (combosAtivos.length === 0) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  section.classList.remove('hidden');
+  combosAtivos.forEach(combo => {
+    container.innerHTML += `
+      <div class="bg-gradient-to-br from-purple-100 to-pink-100 p-4 rounded-2xl shadow-md flex flex-col">
+          <img src="${combo.imageUrl || 'https://placehold.co/600x400/f3e8ff/9333ea?text=Combo'}" 
+               alt="${combo.name}" 
+               class="combo-img mb-3">
+          <h4 class="text-lg font-bold text-purple-800">${combo.name}</h4>
+          <p class="text-sm text-gray-600 flex-grow">${combo.description}</p>
+          <div class="flex justify-between items-center mt-3">
+              <span class="text-xl font-bold text-green-600">R$${(combo.price || 0).toFixed(2).replace('.', ',')}</span>
+              <button onclick="window.pedirCombo('${combo.id}')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition">Pedir</button>
+          </div>
+      </div>
+    `;
+  });
 }
 
-function showModal(content, onOpen = () => {}) {
-    let modalContent = content;
-    if (typeof content === 'string') {
-        modalContent = `<p class="text-lg text-gray-800 mb-6">${content}</p><button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>`;
-    }
-    modalContainer.innerHTML = `<div class="bg-white rounded-2xl p-6 w-full max-w-md text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
-    modalContainer.classList.remove('hidden');
-    setTimeout(() => { document.getElementById('modal-box').classList.remove('scale-95', 'opacity-0'); onOpen(); }, 10);
+// ===================== PEDIDOS =====================
+window.pedirCombo = async (comboId) => {
+  const combo = combos.find(c => c.id === comboId);
+  if (!combo) return;
+
+  const pedido = {
+    id: Date.now().toString(),
+    tipo: "combo",
+    nome: combo.name,
+    preco: combo.price,
+    itens: combo.description,
+    status: "pendente",
+    data: new Date().toISOString()
+  };
+
+  pedidos.push(pedido);
+  await addDoc(collection(db, "pedidos"), pedido);
+  atualizarResumoPedidos();
+  mostrarToast(`Pedido adicionado: ${combo.name}`);
+};
+
+function atualizarResumoPedidos() {
+  const total = pedidos.reduce((acc, p) => acc + (p.preco || 0), 0);
+  document.getElementById("valor-mobile").innerText = `R$${total.toFixed(2).replace('.', ',')}`;
 }
 
-function closeModal() {
-    const modalBox = document.getElementById('modal-box');
-    if (modalBox) {
-        modalBox.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => { modalContainer.classList.add('hidden'); modalContainer.innerHTML = ''; }, 200);
-    }
+// ===================== TOAST =====================
+function mostrarToast(mensagem) {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+  toast.className = "toast-notification bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg mb-2";
+  toast.innerText = mensagem;
+
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 }
 
-// ...
-// (mesmo conteúdo anterior das funções principais de pedido e cálculo)
-// ...
-
-// 🔹 Atualização do relatório de vendas Admin
-function carregarVendasAdmin(startDate, endDate) {
-    initialVendasLoadComplete = false;
-    const tableBody = document.getElementById('vendas-table-body');
-    let q = query(collection(db, "vendas"), orderBy("timestamp", "desc"));
-
-    if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        q = query(collection(db, "vendas"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
-    }
-
-    if (unsubscribeVendas) unsubscribeVendas();
-
-    unsubscribeVendas = onSnapshot(q, (snapshot) => {
-        tableBody.innerHTML = '';
-        let totalVendas = 0;
-
-        snapshot.docs.forEach(docSnap => {
-            const venda = { id: docSnap.id, ...docSnap.data() };
-            const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
-            if (!isNaN(valorNumerico)) totalVendas += valorNumerico;
-
-            const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
-            const statusClass = venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600';
-
-            let pedidoHTML = '';
-            if (venda.itens && Array.isArray(venda.itens)) {
-                pedidoHTML = venda.itens.map((item, index) => {
-                    const acompText = (item.acompanhamentos || []).map(a => `${a.name}(x${a.quantity})`).join(', ');
-
-                    let resumoAcomp = "";
-                    if (item.acompanhamentos && item.acompanhamentos.length > 0) {
-                        const totalPorcoes = item.acompanhamentos.reduce((sum, a) => sum + (a.quantity || 0), 0);
-                        if (item.apenasAcai) {
-                            resumoAcomp = `${totalPorcoes} extras`;
-                        } else {
-                            const inclusos = Math.min(totalPorcoes, 3);
-                            const extras = Math.max(totalPorcoes - 3, 0);
-                            resumoAcomp = `${inclusos} inclusos` + (extras > 0 ? ` + ${extras} extra(s)` : "");
-                        }
-                    } else {
-                        resumoAcomp = item.apenasAcai ? "Somente Açaí" : "Nenhum acompanhamento";
-                    }
-
-                    const precoCopo = item.preco ? `R$${item.preco.toFixed(2).replace(".", ",")}` : "—";
-
-                    return `
-                        <div class="mb-2">
-                            <strong>Copo ${index + 1} (${item.tamanho}):</strong><br>
-                            <small class="text-gray-500">${acompText || resumoAcomp}</small><br>
-                            <small class="text-blue-600 italic">Resumo: ${resumoAcomp}</small><br>
-                            <small class="text-green-700 font-semibold">Valor: ${precoCopo}</small>
-                        </div>
-                    `;
-                }).join('<hr class="my-1">');
-            }
-
-            tableBody.innerHTML += `
-                <tr class="border-b">
-                    <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
-                    <td class="p-3 text-sm">${data}</td>
-                    <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
-                    <td class="p-3 text-sm">${pedidoHTML}</td>
-                    <td class="p-3 font-medium">${venda.total}</td>
-                    <td class="p-3 font-semibold ${statusClass} capitalize">${venda.status}</td>
-                </tr>`;
-        });
-
-        document.getElementById('total-vendas').innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
-    });
+// ===================== ADMIN - COMBOS =====================
+async function carregarCombos() {
+  const querySnapshot = await getDocs(collection(db, "combos"));
+  combos = [];
+  querySnapshot.forEach((docSnap) => {
+    combos.push({ id: docSnap.id, ...docSnap.data() });
+  });
+  renderCombosMenu();
 }
 
-// 🔹 Exportar relatório CSV
-function exportarCSV(vendas) {
-    let csvContent = "OrderID;Cliente;Telefone;Data;Copo;Resumo;Valor\n";
-
-    vendas.forEach(venda => {
-        if (venda.itens) {
-            venda.itens.forEach((item, index) => {
-                let resumoAcomp = "";
-                if (item.acompanhamentos && item.acompanhamentos.length > 0) {
-                    const totalPorcoes = item.acompanhamentos.reduce((sum, a) => sum + (a.quantity || 0), 0);
-                    if (item.apenasAcai) {
-                        resumoAcomp = `${totalPorcoes} extras`;
-                    } else {
-                        const inclusos = Math.min(totalPorcoes, 3);
-                        const extras = Math.max(totalPorcoes - 3, 0);
-                        resumoAcomp = `${inclusos} inclusos` + (extras > 0 ? ` + ${extras} extra(s)` : "");
-                    }
-                } else {
-                    resumoAcomp = item.apenasAcai ? "Somente Açaí" : "Nenhum acompanhamento";
-                }
-
-                const precoCopo = item.preco ? `R$${item.preco.toFixed(2).replace(".", ",")}` : "—";
-                const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
-                csvContent += `${venda.orderId};${venda.nomeCliente};${venda.telefoneCliente};${data};Copo ${index + 1} (${item.tamanho});${resumoAcomp};${precoCopo}\n`;
-            });
-        }
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_vendas.csv`;
-    link.click();
+// ===================== ADMIN - PEDIDOS =====================
+async function carregarPedidos() {
+  const querySnapshot = await getDocs(collection(db, "pedidos"));
+  pedidos = [];
+  querySnapshot.forEach((docSnap) => {
+    pedidos.push({ id: docSnap.id, ...docSnap.data() });
+  });
+  atualizarResumoPedidos();
 }
 
-// 🔹 Exportar relatório PDF
-async function exportarPDF(vendas) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    doc.setFontSize(14);
-    doc.text("Relatório de Vendas", 10, 10);
-
-    let y = 20;
-    vendas.forEach(venda => {
-        doc.setFontSize(10);
-        doc.text(`Pedido: ${venda.orderId} | Cliente: ${venda.nomeCliente} | Telefone: ${venda.telefoneCliente}`, 10, y);
-        y += 6;
-
-        if (venda.itens) {
-            venda.itens.forEach((item, index) => {
-                let resumoAcomp = "";
-                if (item.acompanhamentos && item.acompanhamentos.length > 0) {
-                    const totalPorcoes = item.acompanhamentos.reduce((sum, a) => sum + (a.quantity || 0), 0);
-                    if (item.apenasAcai) {
-                        resumoAcomp = `${totalPorcoes} extras`;
-                    } else {
-                        const inclusos = Math.min(totalPorcoes, 3);
-                        const extras = Math.max(totalPorcoes - 3, 0);
-                        resumoAcomp = `${inclusos} inclusos` + (extras > 0 ? ` + ${extras} extra(s)` : "");
-                    }
-                } else {
-                    resumoAcomp = item.apenasAcai ? "Somente Açaí" : "Nenhum acompanhamento";
-                }
-
-                const precoCopo = item.preco ? `R$${item.preco.toFixed(2).replace(".", ",")}` : "—";
-                doc.text(`Copo ${index + 1} (${item.tamanho}) - ${resumoAcomp} - ${precoCopo}`, 15, y);
-                y += 6;
-            });
-        }
-
-        y += 4;
-        if (y > 270) {
-            doc.addPage();
-            y = 20;
-        }
-    });
-
-    doc.save("relatorio_vendas.pdf");
+// ===================== ADMIN - VENDAS =====================
+async function carregarVendas() {
+  const querySnapshot = await getDocs(collection(db, "vendas"));
+  vendas = [];
+  querySnapshot.forEach((docSnap) => {
+    vendas.push({ id: docSnap.id, ...docSnap.data() });
+  });
 }
+
+// ===================== ADMIN - CAIXA =====================
+async function carregarCaixa() {
+  const querySnapshot = await getDocs(collection(db, "caixa"));
+  caixa = [];
+  querySnapshot.forEach((docSnap) => {
+    caixa.push({ id: docSnap.id, ...docSnap.data() });
+  });
+}
+
+// ===================== EXPORTAÇÃO =====================
+function exportarRelatorio() {
+  const conteudo = JSON.stringify({ pedidos, vendas, caixa }, null, 2);
+  const blob = new Blob([conteudo], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `relatorio_${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+// ===================== INICIALIZAÇÃO =====================
+document.addEventListener("DOMContentLoaded", async () => {
+  await carregarCombos();
+  await carregarPedidos();
+  await carregarVendas();
+  await carregarCaixa();
+
+  // Botão de exportação visível
+  const exportBtn = document.createElement("button");
+  exportBtn.innerText = "Exportar Relatório";
+  exportBtn.className = "fixed bottom-4 left-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow";
+  exportBtn.onclick = exportarRelatorio;
+  document.body.appendChild(exportBtn);
+});
