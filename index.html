@@ -27,7 +27,18 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center bg-gradient-to-b from-emerald-100 to-violet-200 text-gray-800 font-sans p-4">
-
+<!-- Modal de Notificação de Retirada -->
+<div id="retirada-modal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 opacity-0 transition-opacity duration-300 ease-in-out" style="pointer-events: none;">
+    <div id="retirada-modal-box" class="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl transform scale-95 opacity-0 transition-all duration-300 ease-in-out">
+        <h3 class="text-2xl font-bold text-purple-800 mb-4">📢 Aviso Importante</h3>
+        <p class="text-lg text-gray-800 mb-6">
+            Olá! Nossos pedidos são exclusivamente para <strong>retirada no local</strong>. Não fazemos entregas.
+        </p>
+        <button id="close-retirada-modal" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">
+            Entendi
+        </button>
+    </div>
+</div>
   <!-- Botão de Login Admin -->
   <button id="admin-login-button" class="fixed bottom-20 right-4 bg-purple-700 text-white p-3 rounded-full shadow-lg z-40 hover:bg-purple-800 transition">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/></svg>
@@ -1150,6 +1161,7 @@
   </script>
 </body>
 </html>
+
 
 
 
