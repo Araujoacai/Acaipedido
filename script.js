@@ -873,4 +873,4 @@ onSnapshot(collection(db, "combos"), (snapshot) => {
 }, (error) => {
     console.error("Erro ao carregar combos:", error);
     document.getElementById('combos-section').classList.add('hidden');
-});
+}); 
