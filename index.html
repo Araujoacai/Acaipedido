@@ -22,14 +22,14 @@
     }
     input:checked + .radio-label, input:checked + .checkbox-label {
         border-color: #a855f7; /* purple-500 */
-        background-color: rgba(168, 85, 247, 0.1);
+        background-color: #f5f3ff; /* violet-100 */
         transform: translateY(-2px);
         box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2);
     }
     .tab-active { 
-        border-color: #a855f7; /* purple-500 */
-        background-color: #1f2937; /* gray-800 */
-        color: #d8b4fe; /* purple-300 */
+        border-color: #9333ea; /* purple-700 */
+        background-color: #faf5ff; /* purple-50 */
+        color: #9333ea; /* purple-700 */
     }
     @keyframes slide-down {
         from { top: -100px; opacity: 0; }
@@ -40,7 +40,7 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center bg-gray-900 text-gray-200 p-4 bg-gradient-to-br from-gray-900 via-indigo-900 to-purple-900">
+<body class="min-h-screen flex flex-col items-center bg-gray-50 text-gray-800 p-4 bg-gradient-to-br from-purple-100 via-pink-50 to-white">
 
   <!-- Botões Admin Flutuantes -->
   <div class="fixed bottom-24 right-4 z-40 flex flex-col gap-3">
@@ -56,21 +56,21 @@
   <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
 
   <!-- Cardápio Principal -->
-  <div id="menu-container" class="bg-gray-800/50 backdrop-blur-xl border border-purple-500/30 shadow-2xl rounded-3xl p-6 w-full max-w-md lg:max-w-4xl mb-24 lg:mb-4">
+  <div id="menu-container" class="bg-white/80 backdrop-blur-xl border border-purple-200/80 shadow-2xl rounded-3xl p-6 w-full max-w-md lg:max-w-4xl mb-24 lg:mb-4">
     <div class="text-center mb-8">
-        <h1 class="text-4xl lg:text-5xl font-extrabold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500">Cardápio Imperial</h1>
-        <p class="font-bold text-pink-400 tracking-wider">ACOMPANHAMENTOS</p>
-        <p id="acompanhamentos-rules" class="text-purple-300/80">3 porções por copo | Adicional R$3 por porção extra</p>
+        <h1 class="text-4xl lg:text-5xl font-extrabold mb-3 text-purple-800">Cardápio Imperial</h1>
+        <p class="font-bold text-pink-600 tracking-wider">ACOMPANHAMENTOS</p>
+        <p id="acompanhamentos-rules" class="text-purple-600">3 porções por copo | Adicional R$3 por porção extra</p>
     </div>
     
-    <div id="loja-fechada-aviso" class="hidden bg-red-900/50 border border-red-500 text-red-300 p-4 rounded-lg mb-6" role="alert">
+    <div id="loja-fechada-aviso" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6" role="alert">
         <p class="font-bold">Loja Fechada</p>
         <p id="mensagem-loja-fechada"></p>
     </div>
 
     <!-- Seção de Combos -->
     <div id="combos-section" class="mb-8 hidden">
-        <h2 class="text-2xl font-bold text-center text-purple-300 mb-4">🔥 Combos Imperdíveis</h2>
+        <h2 class="text-2xl font-bold text-center text-purple-800 mb-4">🔥 Combos Imperdíveis</h2>
         <div id="combos-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Combos serão inseridos aqui -->
         </div>
@@ -80,55 +80,55 @@
         <!-- Coluna Esquerda: Pedido -->
         <div class="space-y-6">
             <div>
-                <h2 class="text-xl font-semibold text-purple-300 mb-3">🥤 Tamanho</h2>
+                <h2 class="text-xl font-semibold text-purple-700 mb-3">🥤 Tamanho</h2>
                 <div id="tamanhos-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <p class="text-gray-400 col-span-full">A carregar tamanhos...</p>
+                    <p class="text-gray-500 col-span-full">A carregar tamanhos...</p>
                 </div>
             </div>
             <div>
-                <label for="quantidade" class="text-xl font-semibold text-purple-300 mb-3 block">📦 Quantidade</label>
-                <input type="number" id="quantidade" min="1" value="1" class="w-28 p-3 bg-gray-700/50 border-2 border-gray-600 rounded-xl text-center focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                <label for="quantidade" class="text-xl font-semibold text-purple-700 mb-3 block">📦 Quantidade</label>
+                <input type="number" id="quantidade" min="1" value="1" class="w-28 p-3 bg-white border-2 border-purple-200 rounded-xl text-center focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
             </div>
              <div>
-                <label for="nome-cliente" class="text-xl font-semibold text-purple-300 mb-3 block">👤 Seu Nome</label>
-                <input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 bg-gray-700/50 border-2 border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                <label for="nome-cliente" class="text-xl font-semibold text-purple-700 mb-3 block">👤 Seu Nome</label>
+                <input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 bg-white border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
             </div>
              <div>
-                <label for="telefone-cliente" class="text-xl font-semibold text-purple-300 mb-3 block">📞 Telefone/WhatsApp</label>
-                <input type="tel" id="telefone-cliente" placeholder="Seu número para contato" class="w-full p-3 bg-gray-700/50 border-2 border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                <label for="telefone-cliente" class="text-xl font-semibold text-purple-700 mb-3 block">📞 Telefone/WhatsApp</label>
+                <input type="tel" id="telefone-cliente" placeholder="Seu número para contato" class="w-full p-3 bg-white border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
             </div>
              <div>
-                <label for="observacoes" class="text-xl font-semibold text-purple-300 mb-3 block">📝 Observações</label>
-                <textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 bg-gray-700/50 border-2 border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"></textarea>
+                <label for="observacoes" class="text-xl font-semibold text-purple-700 mb-3 block">📝 Observações</label>
+                <textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 bg-white border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"></textarea>
             </div>
         </div>
         
         <!-- Coluna Direita: Acompanhamentos -->
         <div>
-            <div class="bg-gray-700/50 p-3 rounded-lg border border-gray-600 mt-6 lg:mt-0">
+            <div class="bg-purple-50 p-3 rounded-lg border border-purple-200 mt-6 lg:mt-0">
                 <label class="flex items-center cursor-pointer p-2">
-                    <input type="checkbox" id="apenas-acai-check" class="w-5 h-5 accent-purple-500 flex-shrink-0">
-                    <span class="ml-3 font-semibold text-purple-300">Apenas Açaí (sem acompanhamentos)</span>
+                    <input type="checkbox" id="apenas-acai-check" class="w-5 h-5 accent-purple-600 flex-shrink-0">
+                    <span class="ml-3 font-semibold text-purple-800">Apenas Açaí (sem acompanhamentos)</span>
                 </label>
             </div>
             
             <div class="space-y-6 mt-6">
                 <div>
-                    <h3 class="text-lg font-semibold text-pink-400 mb-2">🥭 Frutas</h3>
+                    <h3 class="text-lg font-semibold text-pink-600 mb-2">🥭 Frutas</h3>
                     <div id="frutas-container" class="grid grid-cols-2 gap-3">
-                        <p class="text-gray-400 col-span-2">A carregar frutas...</p>
+                        <p class="text-gray-500 col-span-2">A carregar frutas...</p>
                     </div>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-cyan-400 mb-2">🍫 Cremes</h3>
+                    <h3 class="text-lg font-semibold text-cyan-600 mb-2">🍫 Cremes</h3>
                     <div id="cremes-container" class="grid grid-cols-1 gap-2">
-                        <p class="text-gray-400">A carregar cremes...</p>
+                        <p class="text-gray-500">A carregar cremes...</p>
                     </div>
                 </div>
                  <div>
-                    <h3 class="text-lg font-semibold text-purple-400 mb-2">✨ Outros</h2>
+                    <h3 class="text-lg font-semibold text-purple-600 mb-2">✨ Outros</h2>
                     <div id="outros-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <p class="text-gray-400 col-span-2">A carregar outros itens...</p>
+                        <p class="text-gray-500 col-span-2">A carregar outros itens...</p>
                     </div>
                 </div>
             </div>
@@ -136,10 +136,10 @@
     </div>
     
      <!-- Barra de Ação para Desktop -->
-    <div id="desktop-action-bar" class="hidden lg:flex items-center justify-end mt-8 pt-6 border-t border-purple-500/20">
-        <h2 class="text-3xl font-bold mr-6">💰 Total: <span id="valor-desktop" class="text-green-400">R$0,00</span></h2>
+    <div id="desktop-action-bar" class="hidden lg:flex items-center justify-end mt-8 pt-6 border-t border-purple-200">
+        <h2 class="text-3xl font-bold mr-6">💰 Total: <span id="valor-desktop" class="text-green-600">R$0,00</span></h2>
         <button id="send-order-button-desktop" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:scale-105 transform transition-all duration-300 text-lg flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338- .943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
           Enviar Pedido
         </button>
     </div>
@@ -149,13 +149,13 @@
   <div id="admin-panel" class="hidden w-full max-w-6xl mx-auto p-4"></div>
 
   <!-- Modal Genérico -->
-  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center hidden z-50 p-4">
+  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
       <!-- Conteúdo do modal será inserido aqui -->
   </div>
 
   <!-- Barra fixa WhatsApp (Apenas Mobile) -->
-  <div id="whatsapp-bar" class="fixed bottom-0 left-0 right-0 bg-gray-900/80 backdrop-blur-sm shadow-2xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl border-t border-purple-500/30 lg:hidden">
-    <h2 class="text-xl font-bold">Total: <span id="valor-mobile" class="text-green-400">R$0,00</span></h2>
+  <div id="whatsapp-bar" class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-2xl p-4 flex items-center justify-between max-w-md mx-auto rounded-t-3xl border-t border-purple-200 lg:hidden">
+    <h2 class="text-xl font-bold">Total: <span id="valor-mobile" class="text-green-600">R$0,00</span></h2>
     <button id="send-order-button-mobile" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition flex items-center gap-2">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
       <span>WhatsApp</span>
@@ -164,7 +164,6 @@
 
   <script type="module">
     // Toda a lógica de JavaScript foi mantida e não precisa de alterações.
-    // O novo visual funciona com o script original.
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
     import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -203,9 +202,9 @@
     function showModal(content, onOpen = () => {}) {
         let modalContent = content;
         if (typeof content === 'string') {
-            modalContent = `<p class="text-lg text-gray-200 mb-6">${content}</p><button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>`;
+            modalContent = `<p class="text-lg text-gray-800 mb-6">${content}</p><button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>`;
         }
-        modalContainer.innerHTML = `<div class="bg-gray-800 border border-purple-500/30 text-white rounded-2xl p-6 w-full max-w-md text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
+        modalContainer.innerHTML = `<div class="bg-white border border-purple-200 text-gray-800 rounded-2xl p-6 w-full max-w-md text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
         modalContainer.classList.remove('hidden');
         setTimeout(() => { document.getElementById('modal-box').classList.remove('scale-95', 'opacity-0'); onOpen(); }, 10);
     }
@@ -224,8 +223,7 @@
             renderAdminPanel();
         } else {
             adminLoginBtn.classList.remove('hidden'); adminLogoutBtn.classList.add('hidden'); menuContainer.classList.remove('hidden');
-            // A barra do WhatsApp deve ser reexibida ao fazer logout
-            if (document.body.clientWidth < 1024) { // lg breakpoint
+            if (document.body.clientWidth < 1024) { 
                  whatsappBar.classList.remove('hidden');
             }
             adminPanel.classList.add('hidden');
@@ -236,7 +234,7 @@
     });
 
     adminLoginBtn.addEventListener('click', () => {
-        const loginFormHTML = `<h3 class="text-xl font-bold mb-4">Login Admin</h3><input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2 bg-gray-700 border-gray-600 text-white"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4 bg-gray-700 border-gray-600 text-white"><button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-600 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        const loginFormHTML = `<h3 class="text-xl font-bold mb-4">Login Admin</h3><input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2 bg-gray-100 border-gray-300 text-gray-800"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4 bg-gray-100 border-gray-300 text-gray-800"><button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
         showModal(loginFormHTML, () => {
              document.getElementById('login-submit').addEventListener('click', async () => {
                 try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); closeModal(); } catch (error) { console.error("Erro de login:", error); alert("Email ou senha inválidos."); }
@@ -251,7 +249,7 @@
         Object.values(containers).forEach(c => c.innerHTML = '');
         precosBase = {};
         const produtosVisiveis = produtos.filter(p => p.category !== 'insumo' && p.isActive !== false);
-        if (produtosVisiveis.length === 0) { Object.values(containers).forEach(c => c.innerHTML = '<p class="text-red-400 text-sm col-span-full">Nenhum item. Faça login como admin para adicionar produtos.</p>'); return; }
+        if (produtosVisiveis.length === 0) { Object.values(containers).forEach(c => c.innerHTML = '<p class="text-red-500 text-sm col-span-full">Nenhum item. Faça login como admin para adicionar produtos.</p>'); return; }
         
         produtosVisiveis.forEach(p => {
             const pId = p.name.replace(/[^a-zA-Z0-9]/g, '');
@@ -260,9 +258,9 @@
                 containers.tamanho.innerHTML += `
                     <div>
                         <input type="radio" name="tamanho" value="${p.name}" id="tamanho-${pId}" class="hidden">
-                        <label for="tamanho-${pId}" class="radio-label block cursor-pointer p-3 border-2 border-gray-600 rounded-xl text-center">
+                        <label for="tamanho-${pId}" class="radio-label block cursor-pointer p-3 border-2 border-gray-300 rounded-xl text-center bg-gray-50">
                             <span class="font-semibold block">${p.name}</span>
-                            <span class="text-sm text-gray-400">R$${p.price.toFixed(2)}</span>
+                            <span class="text-sm text-gray-500">R$${p.price.toFixed(2)}</span>
                         </label>
                     </div>`;
             } else {
@@ -270,11 +268,11 @@
                     containers[p.category].innerHTML += `
                     <div class="relative">
                       <input type="checkbox" value="${p.name}" data-qty-target="qty-${pId}" id="check-${pId}" class="acompanhamento-check hidden">
-                       <label for="check-${pId}" class="checkbox-label cursor-pointer flex items-center bg-gray-700/50 p-3 border-2 border-gray-600 rounded-xl">
+                       <label for="check-${pId}" class="checkbox-label cursor-pointer flex items-center bg-gray-50 p-3 border-2 border-gray-300 rounded-xl">
                           <img src="${p.iconUrl || 'https://placehold.co/24x24/7c3aed/f3e8ff?text=AC'}" alt="${p.name}" class="w-6 h-6 object-contain mr-3 flex-shrink-0 rounded-full" onerror="this.src='https://placehold.co/24x24/7c3aed/f3e8ff?text=AC'">
                           <span class="flex-grow truncate font-medium">${p.name}</span>
                        </label>
-                       <input type="number" value="1" min="1" id="qty-${pId}" class="acompanhamento-qty w-16 text-center border-gray-600 bg-gray-700 rounded-md absolute right-2 top-1/2 -translate-y-1/2 p-1 hidden">
+                       <input type="number" value="1" min="1" id="qty-${pId}" class="acompanhamento-qty w-16 text-center border-gray-300 bg-white rounded-md absolute right-2 top-1/2 -translate-y-1/2 p-1 hidden">
                     </div>`;
                 }
             }
@@ -286,10 +284,10 @@
                 if (e.target.checked) {
                     qtyInput.classList.remove('hidden');
                     qtyInput.value = 1;
-                    e.target.nextElementSibling.classList.add('pr-20'); // Add padding to label
+                    e.target.nextElementSibling.classList.add('pr-20'); 
                 } else {
                     qtyInput.classList.add('hidden');
-                     e.target.nextElementSibling.classList.remove('pr-20'); // Remove padding
+                     e.target.nextElementSibling.classList.remove('pr-20');
                 }
                 calcularValor();
             });
@@ -312,12 +310,12 @@
         section.classList.remove('hidden');
         combosAtivos.forEach(combo => {
             container.innerHTML += `
-                <div class="bg-gray-800/60 p-4 rounded-2xl shadow-md flex flex-col border border-purple-500/20">
-                    <img src="${combo.imageUrl || 'https://placehold.co/600x400/111827/a855f7?text=Combo'}" alt="${combo.name}" class="w-full h-32 object-cover rounded-lg mb-3">
-                    <h4 class="text-lg font-bold text-purple-300">${combo.name}</h4>
-                    <p class="text-sm text-gray-400 flex-grow">${combo.description}</p>
+                <div class="bg-white/60 p-4 rounded-2xl shadow-md flex flex-col border border-purple-200">
+                    <img src="${combo.imageUrl || 'https://placehold.co/600x400/f3e8ff/9333ea?text=Combo'}" alt="${combo.name}" class="w-full h-32 object-cover rounded-lg mb-3">
+                    <h4 class="text-lg font-bold text-purple-800">${combo.name}</h4>
+                    <p class="text-sm text-gray-600 flex-grow">${combo.description}</p>
                     <div class="flex justify-between items-center mt-3">
-                        <span class="text-xl font-bold text-green-400">R$${(combo.price || 0).toFixed(2).replace('.', ',')}</span>
+                        <span class="text-xl font-bold text-green-600">R$${(combo.price || 0).toFixed(2).replace('.', ',')}</span>
                         <button onclick="window.pedirCombo('${combo.id}')" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-lg transition">Pedir</button>
                     </div>
                 </div>
@@ -362,7 +360,6 @@
     function resetarFormulario() {
         document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(el => {
             el.checked = false;
-            // Trigger change event to update UI styles
             el.dispatchEvent(new Event('change'));
         });
         document.getElementById('quantidade').value = 1;
@@ -509,14 +506,11 @@
             showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp.");
         }
     };
-    
-    // As funções de admin (renderAdminPanel, etc.) foram mantidas e devem funcionar
-    // com o novo visual. Foram feitos pequenos ajustes de cor para o tema escuro.
 
     function renderAdminPanel() {
         adminPanel.innerHTML = `
-            <h2 class="text-3xl font-bold text-center text-purple-300 mb-6">Painel de Administração</h2>
-            <div class="flex border-b border-gray-700 mb-4 overflow-x-auto no-scrollbar">
+            <h2 class="text-3xl font-bold text-center text-purple-700 mb-6">Painel de Administração</h2>
+            <div class="flex border-b border-gray-200 mb-4 overflow-x-auto no-scrollbar">
                 <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active flex-shrink-0">Gerenciar Produtos</button>
                 <button id="tab-combos" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Gerenciar Combos</button>
                 <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Relatório de Vendas</button>
@@ -549,13 +543,13 @@
     }
 
     function renderProdutosAdmin() {
-        document.getElementById('content-produtos').innerHTML = `<div class="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8"><h3 class="text-2xl font-semibold mb-4 text-purple-300">Adicionar / Editar Produto</h3><div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 p-4 border border-gray-700 rounded-lg"><input type="hidden" id="produto-id"><input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded bg-gray-700 border-gray-600"><input type="number" id="produto-preco" placeholder="Preço Venda" step="0.01" class="p-2 border rounded bg-gray-700 border-gray-600"><input type="number" id="produto-custo" placeholder="Preço Custo" step="0.01" class="p-2 border rounded bg-gray-700 border-gray-600"><input type="text" id="produto-unidade" placeholder="Unidade (g, ml, un)" class="p-2 border rounded bg-gray-700 border-gray-600"><input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded bg-gray-700 border-gray-600"><select id="produto-categoria" class="p-2 border rounded bg-gray-700 border-gray-600"><option value="tamanho">Tamanho</option><option value="fruta">Fruta</option><option value="creme">Creme</option><option value="outro">Outro</option><option value="insumo">Insumo</option></select><button id="salvar-produto-btn" class="bg-green-600 text-white p-2 rounded hover:bg-green-700 col-span-full">Salvar</button></div><div id="lista-produtos-admin"></div></div>`;
+        document.getElementById('content-produtos').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg mb-8"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Produto</h3><div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 p-4 border border-gray-200 rounded-lg"><input type="hidden" id="produto-id"><input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded border-gray-300"><input type="number" id="produto-preco" placeholder="Preço Venda" step="0.01" class="p-2 border rounded border-gray-300"><input type="number" id="produto-custo" placeholder="Preço Custo" step="0.01" class="p-2 border rounded border-gray-300"><input type="text" id="produto-unidade" placeholder="Unidade (g, ml, un)" class="p-2 border rounded border-gray-300"><input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded border-gray-300"><select id="produto-categoria" class="p-2 border rounded border-gray-300"><option value="tamanho">Tamanho</option><option value="fruta">Fruta</option><option value="creme">Creme</option><option value="outro">Outro</option><option value="insumo">Insumo</option></select><button id="salvar-produto-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-full">Salvar</button></div><div id="lista-produtos-admin"></div></div>`;
         document.getElementById('salvar-produto-btn').addEventListener('click', salvarProduto);
         carregarProdutosAdmin();
     }
 
     function renderCombosAdmin() {
-        document.getElementById('content-combos').innerHTML = `<div class="bg-gray-800 p-6 rounded-2xl shadow-lg mb-8"><h3 class="text-2xl font-semibold mb-4 text-purple-300">Adicionar / Editar Combo</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border border-gray-700 rounded-lg"><input type="hidden" id="combo-id"><input type="text" id="combo-nome" placeholder="Nome do Combo" class="p-2 border rounded bg-gray-700 border-gray-600"><input type="number" id="combo-preco" placeholder="Preço do Combo" step="0.01" class="p-2 border rounded bg-gray-700 border-gray-600"><input type="text" id="combo-imagem" placeholder="URL da Imagem" class="p-2 border rounded col-span-full bg-gray-700 border-gray-600"><textarea id="combo-descricao" placeholder="Descrição do Combo (Ex: 2 Açaís 500ml...)" class="p-2 border rounded col-span-full bg-gray-700 border-gray-600" rows="3"></textarea><button id="salvar-combo-btn" class="bg-green-600 text-white p-2 rounded hover:bg-green-700 col-span-full">Salvar Combo</button></div><div id="lista-combos-admin"></div></div>`;
+        document.getElementById('content-combos').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg mb-8"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Combo</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 p-4 border border-gray-200 rounded-lg"><input type="hidden" id="combo-id"><input type="text" id="combo-nome" placeholder="Nome do Combo" class="p-2 border rounded border-gray-300"><input type="number" id="combo-preco" placeholder="Preço do Combo" step="0.01" class="p-2 border rounded border-gray-300"><input type="text" id="combo-imagem" placeholder="URL da Imagem" class="p-2 border rounded col-span-full border-gray-300"><textarea id="combo-descricao" placeholder="Descrição do Combo (Ex: 2 Açaís 500ml...)" class="p-2 border rounded col-span-full border-gray-300" rows="3"></textarea><button id="salvar-combo-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-full">Salvar Combo</button></div><div id="lista-combos-admin"></div></div>`;
         document.getElementById('salvar-combo-btn').addEventListener('click', salvarCombo);
         carregarCombosAdmin();
     }
@@ -573,14 +567,14 @@
     function carregarCombosAdmin() {
         const container = document.getElementById('lista-combos-admin');
         onSnapshot(query(collection(db, "combos"), orderBy("name")), (snapshot) => {
-            container.innerHTML = `<h4 class="text-xl font-medium mt-6 mb-2 text-purple-400">Combos Cadastrados</h4>`;
+            container.innerHTML = `<h4 class="text-xl font-medium mt-6 mb-2 text-purple-600">Combos Cadastrados</h4>`;
             const grid = document.createElement('div');
             grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
-            if (snapshot.empty) { grid.innerHTML = '<p class="col-span-full text-gray-400">Nenhum combo cadastrado.</p>'; }
+            if (snapshot.empty) { grid.innerHTML = '<p class="col-span-full text-gray-500">Nenhum combo cadastrado.</p>'; }
             snapshot.forEach(docSnap => {
                 const c = { id: docSnap.id, ...docSnap.data() };
                 const isInactive = c.isActive === false;
-                grid.innerHTML += `<div class="border border-gray-700 p-3 rounded-lg flex justify-between items-start ${isInactive ? 'opacity-50' : ''}"><div class="flex-grow"><p class="font-bold">${c.name}</p><p class="text-sm text-gray-400">${c.description}</p><p class="text-md font-semibold text-green-400 mt-1">R$${(c.price || 0).toFixed(2)}</p></div><div class="flex flex-col ml-2"><button class="toggle-combo-btn p-1 text-white rounded mb-1 ${isInactive ? 'bg-gray-600' : 'bg-green-500'}" data-id="${c.id}">${isInactive ? '🚫' : '👁️'}</button><button class="edit-combo-btn p-1 text-blue-400" data-id="${c.id}">✏️</button><button class="delete-combo-btn p-1 text-red-400" data-id="${c.id}">🗑️</button></div></div>`;
+                grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-start ${isInactive ? 'opacity-50' : ''}"><div class="flex-grow"><p class="font-bold">${c.name}</p><p class="text-sm text-gray-600">${c.description}</p><p class="text-md font-semibold text-green-700 mt-1">R$${(c.price || 0).toFixed(2)}</p></div><div class="flex flex-col ml-2"><button class="toggle-combo-btn p-1 text-white rounded mb-1 ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${c.id}">${isInactive ? '🚫' : '👁️'}</button><button class="edit-combo-btn p-1 text-blue-500" data-id="${c.id}">✏️</button><button class="delete-combo-btn p-1 text-red-500" data-id="${c.id}">🗑️</button></div></div>`;
             });
             container.appendChild(grid);
             document.querySelectorAll('.edit-combo-btn').forEach(btn => btn.addEventListener('click', (e) => editarCombo(e.currentTarget.dataset.id)));
@@ -595,7 +589,7 @@
     }
 
     function deletarCombo(id) {
-        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este combo?</p><button id="confirm-delete-combo-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-600 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
+        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este combo?</p><button id="confirm-delete-combo-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
             document.getElementById('confirm-delete-combo-btn').addEventListener('click', async () => {
                 try { await deleteDoc(doc(db, "combos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir combo:", error); closeModal(); showModal('Ocorreu um erro ao excluir o combo.'); }
             });
@@ -610,24 +604,22 @@
         }
     }
     
-    // As demais funções de JavaScript foram mantidas sem alterações
-    // e estão incluídas abaixo para garantir a funcionalidade completa.
     function renderVendasAdmin() {
-        document.getElementById('content-vendas').innerHTML = `<div class="bg-gray-800 p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-300">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-700 rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded bg-gray-700 border-gray-600"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded bg-gray-700 border-gray-600"><button id="gerar-relatorio-btn" class="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-700"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body" class="divide-y divide-gray-700"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-200">Total das Vendas (Período): <span id="total-vendas" class="text-purple-300">R$0,00</span></h4></div></div>`;
+        document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded border-gray-300"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body" class="divide-y divide-gray-200"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
         document.getElementById('gerar-relatorio-btn').addEventListener('click', () => carregarVendasAdmin(document.getElementById('start-date').value, document.getElementById('end-date').value));
         carregarVendasAdmin();
     }
 
     function renderConfigAdmin() {
         const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
-        let diasHTML = dias.map(dia => `<div class="grid grid-cols-1 sm:grid-cols-10 gap-x-4 gap-y-2 items-center mb-3 pb-3 border-b border-gray-700 last:border-b-0"><span class="font-semibold capitalize sm:col-span-3">${dia}-feira</span><input type="time" id="${dia}-abertura" class="p-2 border rounded w-full sm:col-span-3 bg-gray-700 border-gray-600"><input type="time" id="${dia}-fechamento" class="p-2 border rounded w-full sm:col-span-3 bg-gray-700 border-gray-600"><label class="flex items-center gap-2 sm:justify-self-center sm:col-span-1"><input type="checkbox" id="${dia}-aberto" class="w-5 h-5 accent-purple-500"> Aberto</label></div>`).join('');
-        document.getElementById('content-config').innerHTML = `<div class="bg-gray-800 p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-300">Configurações Gerais</h3><div class="mb-6 p-4 border border-gray-700 rounded-lg"><label for="whatsapp-number" class="block font-semibold mb-2">Número do WhatsApp para Pedidos</label><input type="text" id="whatsapp-number" placeholder="Ex: 5511999998888" class="w-full p-2 border rounded bg-gray-700 border-gray-600"></div><h3 class="text-2xl font-semibold mb-4 text-purple-300">Horário de Funcionamento</h3><div class="p-4 border border-gray-700 rounded-lg">${diasHTML}</div><h3 class="text-2xl font-semibold mt-6 mb-4 text-purple-300">Mensagem (Loja Fechada)</h3><textarea id="mensagem-fechado" class="w-full p-2 border rounded bg-gray-700 border-gray-600" rows="3" placeholder="Ex: Estamos fechados. Nosso horário é de..."></textarea><button id="salvar-config-btn" class="bg-green-600 text-white p-2 rounded hover:bg-green-700 mt-4">Salvar Configurações</button></div>`;
+        let diasHTML = dias.map(dia => `<div class="grid grid-cols-1 sm:grid-cols-10 gap-x-4 gap-y-2 items-center mb-3 pb-3 border-b border-gray-200 last:border-b-0"><span class="font-semibold capitalize sm:col-span-3">${dia}-feira</span><input type="time" id="${dia}-abertura" class="p-2 border rounded w-full sm:col-span-3 border-gray-300"><input type="time" id="${dia}-fechamento" class="p-2 border rounded w-full sm:col-span-3 border-gray-300"><label class="flex items-center gap-2 sm:justify-self-center sm:col-span-1"><input type="checkbox" id="${dia}-aberto" class="w-5 h-5 accent-purple-600"> Aberto</label></div>`).join('');
+        document.getElementById('content-config').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Configurações Gerais</h3><div class="mb-6 p-4 border border-gray-200 rounded-lg"><label for="whatsapp-number" class="block font-semibold mb-2">Número do WhatsApp para Pedidos</label><input type="text" id="whatsapp-number" placeholder="Ex: 5511999998888" class="w-full p-2 border rounded border-gray-300"></div><h3 class="text-2xl font-semibold mb-4 text-purple-700">Horário de Funcionamento</h3><div class="p-4 border border-gray-200 rounded-lg">${diasHTML}</div><h3 class="text-2xl font-semibold mt-6 mb-4 text-purple-700">Mensagem (Loja Fechada)</h3><textarea id="mensagem-fechado" class="w-full p-2 border rounded border-gray-300" rows="3" placeholder="Ex: Estamos fechados. Nosso horário é de..."></textarea><button id="salvar-config-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 mt-4">Salvar Configurações</button></div>`;
         document.getElementById('salvar-config-btn').addEventListener('click', salvarConfiguracoes);
         carregarConfiguracoesAdmin();
     }
     
     function renderCaixaAdmin() {
-        document.getElementById('content-caixa').innerHTML = `<div class="bg-gray-800 p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-300">Fluxo de Caixa</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center"><div class="bg-green-900/50 p-4 rounded-lg"><h4 class="font-semibold text-green-300">Total de Entradas</h4><p id="total-entradas" class="text-2xl font-bold text-green-400">R$0,00</p></div><div class="bg-red-900/50 p-4 rounded-lg"><h4 class="font-semibold text-red-300">Total de Saídas</h4><p id="total-saidas" class="text-2xl font-bold text-red-400">R$0,00</p></div><div class="bg-blue-900/50 p-4 rounded-lg"><h4 class="font-semibold text-blue-300">Saldo Atual</h4><p id="saldo-atual" class="text-2xl font-bold text-blue-400">R$0,00</p></div></div><div class="mb-6 p-4 border border-gray-700 rounded-lg"><h4 class="text-xl font-medium mb-3">Adicionar Lançamento</h4><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><input type="hidden" id="transacao-id"><input type="text" id="transacao-descricao" placeholder="Descrição" class="p-2 border rounded col-span-2 bg-gray-700 border-gray-600"><input type="number" id="transacao-valor" placeholder="Valor" step="0.01" class="p-2 border rounded bg-gray-700 border-gray-600"><select id="transacao-tipo" class="p-2 border rounded bg-gray-700 border-gray-600"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><button id="salvar-transacao-btn" class="bg-green-600 text-white p-2 rounded hover:bg-green-700 col-span-4 md:col-span-1">Salvar</button></div></div><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-700 rounded-lg"><label for="start-date-caixa">De:</label><input type="date" id="start-date-caixa" class="p-2 border rounded bg-gray-700 border-gray-600"><label for="end-date-caixa">Até:</label><input type="date" id="end-date-caixa" class="p-2 border rounded bg-gray-700 border-gray-600"><button id="gerar-relatorio-caixa-btn" class="bg-blue-600 text-white p-2 rounded hover:bg-blue-700">Filtrar</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-700"><tr><th class="p-3">Data</th><th class="p-3">Descrição</th><th class="p-3">Tipo</th><th class="p-3">Valor</th><th class="p-3">Ações</th></tr></thead><tbody id="caixa-table-body" class="divide-y divide-gray-700"></tbody></table></div></div>`;
+        document.getElementById('content-caixa').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Fluxo de Caixa</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center"><div class="bg-green-100 p-4 rounded-lg"><h4 class="font-semibold text-green-800">Total de Entradas</h4><p id="total-entradas" class="text-2xl font-bold text-green-600">R$0,00</p></div><div class="bg-red-100 p-4 rounded-lg"><h4 class="font-semibold text-red-800">Total de Saídas</h4><p id="total-saidas" class="text-2xl font-bold text-red-600">R$0,00</p></div><div class="bg-blue-100 p-4 rounded-lg"><h4 class="font-semibold text-blue-800">Saldo Atual</h4><p id="saldo-atual" class="text-2xl font-bold text-blue-600">R$0,00</p></div></div><div class="mb-6 p-4 border border-gray-200 rounded-lg"><h4 class="text-xl font-medium mb-3">Adicionar Lançamento</h4><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><input type="hidden" id="transacao-id"><input type="text" id="transacao-descricao" placeholder="Descrição" class="p-2 border rounded col-span-2 border-gray-300"><input type="number" id="transacao-valor" placeholder="Valor" step="0.01" class="p-2 border rounded border-gray-300"><select id="transacao-tipo" class="p-2 border rounded border-gray-300"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><button id="salvar-transacao-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-4 md:col-span-1">Salvar</button></div></div><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date-caixa">De:</label><input type="date" id="start-date-caixa" class="p-2 border rounded border-gray-300"><label for="end-date-caixa">Até:</label><input type="date" id="end-date-caixa" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-caixa-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Filtrar</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">Data</th><th class="p-3">Descrição</th><th class="p-3">Tipo</th><th class="p-3">Valor</th><th class="p-3">Ações</th></tr></thead><tbody id="caixa-table-body" class="divide-y divide-gray-200"></tbody></table></div></div>`;
         document.getElementById('salvar-transacao-btn').addEventListener('click', salvarTransacao);
         document.getElementById('gerar-relatorio-caixa-btn').addEventListener('click', () => carregarFluxoCaixa(document.getElementById('start-date-caixa').value, document.getElementById('end-date-caixa').value));
         carregarFluxoCaixa();
@@ -651,12 +643,12 @@
             snapshot.docs.forEach(docSnap => { const p = { id: docSnap.id, ...docSnap.data() }; if(produtosPorCategoria[p.category]) produtosPorCategoria[p.category].push(p); });
             container.innerHTML = '';
             for (const categoria in produtosPorCategoria) {
-                container.innerHTML += `<h4 class="text-xl font-medium mt-6 mb-2 capitalize text-purple-400">${categoria}s</h4>`;
+                container.innerHTML += `<h4 class="text-xl font-medium mt-6 mb-2 capitalize text-purple-600">${categoria}s</h4>`;
                 const grid = document.createElement('div');
                 grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
                 produtosPorCategoria[categoria].forEach(p => {
                     const isInactive = p.isActive === false;
-                    grid.innerHTML += `<div class="border border-gray-700 p-3 rounded-lg flex justify-between items-center ${isInactive ? 'opacity-50' : ''}"><div><p class="font-bold">${p.name}</p><p class="text-sm text-gray-400">Venda: R$${(p.price || 0).toFixed(2)} | Custo: R$${(p.cost || 0).toFixed(2)} / ${p.unit}</p></div><div class="flex items-center">${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1 text-white rounded ${isInactive ? 'bg-gray-600' : 'bg-green-500'}" data-id="${p.id}">${isInactive ? '🚫' : '👁️'}</button>` : ''}${p.category === 'tamanho' ? `<button class="recipe-btn p-1 text-green-400" data-id="${p.id}">⚙️</button>` : ''}<button class="edit-produto-btn p-1 text-blue-400" data-id="${p.id}">✏️</button><button class="delete-produto-btn p-1 text-red-400" data-id="${p.id}">🗑️</button></div></div>`;
+                    grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-center ${isInactive ? 'opacity-50' : ''}"><div><p class="font-bold">${p.name}</p><p class="text-sm text-gray-600">Venda: R$${(p.price || 0).toFixed(2)} | Custo: R$${(p.cost || 0).toFixed(2)} / ${p.unit}</p></div><div class="flex items-center">${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}">${isInactive ? '🚫' : '👁️'}</button>` : ''}${p.category === 'tamanho' ? `<button class="recipe-btn p-1 text-green-500" data-id="${p.id}">⚙️</button>` : ''}<button class="edit-produto-btn p-1 text-blue-500" data-id="${p.id}">✏️</button><button class="delete-produto-btn p-1 text-red-500" data-id="${p.id}">🗑️</button></div></div>`;
                 });
                 container.appendChild(grid);
             }
@@ -673,7 +665,7 @@
     }
 
     function deletarProduto(id) {
-        const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este produto?</p><button id="confirm-delete-produto-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-600 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+        const confirmationHTML = `<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este produto?</p><button id="confirm-delete-produto-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
         showModal(confirmationHTML, () => {
             document.getElementById('confirm-delete-produto-btn').addEventListener('click', async () => {
                 try { await deleteDoc(doc(db, "produtos", id)); closeModal(); } catch (error) { console.error("Erro ao excluir produto:", error); closeModal(); showModal('Ocorreu um erro ao excluir o produto.'); }
@@ -738,17 +730,17 @@
         unsubscribeVendas = onSnapshot(q, (snapshot) => {
             if (initialVendasLoadComplete && snapshot.docChanges().some(change => change.type === 'added')) { playNotificationSound(); showToast("Novo Pedido Recebido!"); document.getElementById('tab-vendas').click(); }
             tableBody.innerHTML = ''; let totalVendas = 0;
-            if (snapshot.empty) { tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">Nenhuma venda encontrada.</td></tr>'; document.getElementById('total-vendas').innerText = 'R$0,00'; } else {
+            if (snapshot.empty) { tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhuma venda encontrada.</td></tr>'; document.getElementById('total-vendas').innerText = 'R$0,00'; } else {
                 snapshot.docs.forEach(docSnap => {
                     const venda = { id: docSnap.id, ...docSnap.data() }; const isCombo = venda.pedidoCombo && !venda.tamanho; const { custoTotal, lucro } = isCombo ? { custoTotal: 0, lucro: 0 } : calcularCustoPedido(venda);
                     const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.')); if (!isNaN(valorNumerico)) { totalVendas += valorNumerico; }
                     const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
-                    const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-400">${venda.observacoes}</small>` : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-400">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-400 font-semibold">Obs: ${venda.observacoes}</small>`;
-                    const financeiroHTML = isCombo ? `Venda: ${venda.total}<br><small class="text-gray-400">Custo/Lucro não aplicável</small>` : `Venda: ${venda.total}<br><small class="text-red-400">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-400">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                    const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>` : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
+                    const financeiroHTML = isCombo ? `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>` : `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
                     tableBody.innerHTML += `<tr class="border-b-0">
-                        <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td><td class="p-3 text-sm">${data}</td><td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-400 font-normal">${venda.telefoneCliente || ''}</small></td>
-                        <td class="p-3 text-sm">${pedidoHTML}</td><td class="p-3 font-medium">${financeiroHTML}</td><td class="p-3 font-semibold ${venda.status === 'pendente' ? 'text-yellow-400' : 'text-green-400'} capitalize">${venda.status}</td>
-                        <td class="p-3">${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-600 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}<button class="delete-venda-btn bg-red-600 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button></td>
+                        <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td><td class="p-3 text-sm">${data}</td><td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
+                        <td class="p-3 text-sm">${pedidoHTML}</td><td class="p-3 font-medium">${financeiroHTML}</td><td class="p-3 font-semibold ${venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600'} capitalize">${venda.status}</td>
+                        <td class="p-3">${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}<button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button></td>
                     </tr>`;
                 }); document.getElementById('total-vendas').innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
             }
@@ -765,7 +757,7 @@
     }
 
     function deletarVenda(id) {
-        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir esta venda?</p><button id="confirm-delete-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-600 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
+        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir esta venda?</p><button id="confirm-delete-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
             document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
                 try { await deleteDoc(doc(db, "vendas", id)); closeModal(); } catch (error) { console.error("Erro ao excluir venda:", error); closeModal(); showModal('Ocorreu um erro ao excluir a venda.'); }
             });
@@ -804,11 +796,11 @@
         if (unsubscribeFluxoCaixa) unsubscribeFluxoCaixa();
         unsubscribeFluxoCaixa = onSnapshot(q, (snapshot) => {
             tableBody.innerHTML = ''; let totalEntradas = 0, totalSaidas = 0;
-            if (snapshot.empty) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">Nenhum lançamento encontrado.</td></tr>'; }
+            if (snapshot.empty) { tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">Nenhum lançamento encontrado.</td></tr>'; }
             snapshot.docs.forEach(docSnap => {
                 const t = { id: docSnap.id, ...docSnap.data() }; const valor = t.valor || 0;
                 if (t.tipo === 'entrada') totalEntradas += valor; else totalSaidas += valor;
-                tableBody.innerHTML += `<tr class="border-b-0"><td class="p-3 text-sm">${t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString('pt-BR') : 'N/A'}</td><td class="p-3">${t.descricao}</td><td class="p-3 font-semibold ${t.tipo === 'entrada' ? 'text-green-400' : 'text-red-400'} capitalize">${t.tipo}</td><td class="p-3 font-medium">R$${valor.toFixed(2).replace('.', ',')}</td><td class="p-3"><button class="delete-transacao-btn bg-red-600 text-white px-2 py-1 rounded text-xs" data-id="${t.id}">🗑️</button></td></tr>`;
+                tableBody.innerHTML += `<tr class="border-b-0"><td class="p-3 text-sm">${t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString('pt-BR') : 'N/A'}</td><td class="p-3">${t.descricao}</td><td class="p-3 font-semibold ${t.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'} capitalize">${t.tipo}</td><td class="p-3 font-medium">R$${valor.toFixed(2).replace('.', ',')}</td><td class="p-3"><button class="delete-transacao-btn bg-red-500 text-white px-2 py-1 rounded text-xs" data-id="${t.id}">🗑️</button></td></tr>`;
             });
             document.getElementById('total-entradas').innerText = `R$${totalEntradas.toFixed(2).replace('.', ',')}`; document.getElementById('total-saidas').innerText = `R$${totalSaidas.toFixed(2).replace('.', ',')}`; document.getElementById('saldo-atual').innerText = `R$${(totalEntradas - totalSaidas).toFixed(2).replace('.', ',')}`;
             document.querySelectorAll('.delete-transacao-btn').forEach(btn => btn.addEventListener('click', e => deletarTransacao(e.currentTarget.dataset.id)));
@@ -816,7 +808,7 @@
     }
 
     function deletarTransacao(id) {
-        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este lançamento?</p><button id="confirm-delete-transacao-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-600 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
+        showModal(`<h3 class="text-xl font-bold mb-4">Confirmar Exclusão</h3><p class="mb-6">Tem certeza que deseja excluir este lançamento?</p><button id="confirm-delete-transacao-btn" class="bg-red-500 text-white px-6 py-2 rounded-lg">Excluir</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`, () => {
             document.getElementById('confirm-delete-transacao-btn').addEventListener('click', async () => {
                 try { await deleteDoc(doc(db, "fluxoCaixa", id)); closeModal(); } catch (error) { console.error("Erro ao excluir transação:", error); closeModal(); showModal('Ocorreu um erro ao excluir.'); }
             });
@@ -834,7 +826,7 @@
         [sendOrderBtnMobile, sendOrderBtnDesktop].forEach(btn => {
             if (btn) {
                 btn.disabled = !isStoreOpen;
-                btn.classList.toggle('bg-gray-600', !isStoreOpen);
+                btn.classList.toggle('bg-gray-400', !isStoreOpen);
                 btn.classList.toggle('cursor-not-allowed', !isStoreOpen);
                 btn.classList.toggle('bg-gradient-to-r', isStoreOpen);
                 avisoLojaFechada.classList.toggle('hidden', isStoreOpen);
@@ -848,9 +840,9 @@
         const insumos = produtos.filter(p => p.category === 'insumo');
         let insumosHTML = insumos.map(insumo => {
             const itemReceita = produtoTamanho.recipe?.find(r => r.name === insumo.name);
-            return `<div class="flex justify-between items-center mb-2"><label for="recipe-${insumo.id}">${insumo.name} (${insumo.unit})</label><input type="number" id="recipe-${insumo.id}" data-name="${insumo.name}" value="${itemReceita ? itemReceita.quantity : 0}" class="w-24 p-1 border rounded text-center bg-gray-700 border-gray-600" placeholder="Qtd."></div>`;
+            return `<div class="flex justify-between items-center mb-2"><label for="recipe-${insumo.id}">${insumo.name} (${insumo.unit})</label><input type="number" id="recipe-${insumo.id}" data-name="${insumo.name}" value="${itemReceita ? itemReceita.quantity : 0}" class="w-24 p-1 border rounded text-center bg-gray-100 border-gray-300" placeholder="Qtd."></div>`;
         }).join('');
-        showModal(`<div class="text-left"><h3 class="text-xl font-bold mb-4 text-purple-300">Ficha Técnica para ${produtoTamanho.name}</h3><div id="recipe-form" class="max-h-96 overflow-y-auto p-2">${insumosHTML}</div><div class="mt-6 text-right"><button id="save-recipe-btn" class="bg-green-600 text-white px-6 py-2 rounded-lg">Salvar Receita</button><button onclick="window.closeModal()" class="bg-gray-600 px-4 py-2 rounded-lg ml-2">Cancelar</button></div></div>`, () => {
+        showModal(`<div class="text-left"><h3 class="text-xl font-bold mb-4 text-purple-700">Ficha Técnica para ${produtoTamanho.name}</h3><div id="recipe-form" class="max-h-96 overflow-y-auto p-2">${insumosHTML}</div><div class="mt-6 text-right"><button id="save-recipe-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg">Salvar Receita</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button></div></div>`, () => {
             document.getElementById('save-recipe-btn').addEventListener('click', () => salvarReceita(id));
         });
     }
@@ -868,7 +860,7 @@
 
     onSnapshot(collection(db, "produtos"), (snapshot) => {
         produtos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderMenu(); calcularValor();
-    }, (error) => { console.error("Erro ao carregar produtos:", error); document.getElementById('menu-container').innerHTML = '<p class="text-red-400 text-center">Não foi possível carregar o cardápio.</p>'; });
+    }, (error) => { console.error("Erro ao carregar produtos:", error); document.getElementById('menu-container').innerHTML = '<p class="text-red-500 text-center">Não foi possível carregar o cardápio.</p>'; });
 
     onSnapshot(collection(db, "combos"), (snapshot) => {
         combos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCombosMenu();
@@ -876,3 +868,4 @@
   </script>
 </body>
 </html>
+
