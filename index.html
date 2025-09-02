@@ -62,7 +62,7 @@
     <img src="Logoacai.png" alt="Banner Açaí Imperial" class="rounded-xl shadow-md mb-6 w-full h-auto" onerror="this.style.display='none'">
 
     <div class="text-center mb-8">
-        <h1 class="text-4xl lg:text-5xl font-extrabold mb-3 text-purple-800">Cardápio Araújo</h1>
+        <h1 class="text-4xl lg:text-5xl font-extrabold mb-3 text-purple-800">Cardápio Araujo</h1>
         <p class="font-bold text-pink-600 tracking-wider">ACOMPANHAMENTOS</p>
         <p id="acompanhamentos-rules" class="text-purple-600">3 porções por copo | Adicional R$3 por porção extra</p>
     </div>
@@ -170,7 +170,7 @@
     // Toda a lógica de JavaScript foi mantida e não precisa de alterações.
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
@@ -609,9 +609,83 @@
     }
     
     function renderVendasAdmin() {
-        document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded border-gray-300"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body" class="divide-y divide-gray-200"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
+        document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded border-gray-300"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button><button id="exportar-relatorio-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Exportar CSV</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body" class="divide-y divide-gray-200"></tbody></table></div><div class="mt-4 text-right pr-4"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div>`;
         document.getElementById('gerar-relatorio-btn').addEventListener('click', () => carregarVendasAdmin(document.getElementById('start-date').value, document.getElementById('end-date').value));
+        document.getElementById('exportar-relatorio-btn').addEventListener('click', exportarRelatorioVendas);
         carregarVendasAdmin();
+    }
+
+    async function exportarRelatorioVendas() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        let q = query(collection(db, "vendas"), orderBy("timestamp", "desc"));
+
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            q = query(collection(db, "vendas"), where("timestamp", ">=", start), where("timestamp", "<=", end), orderBy("timestamp", "desc"));
+        }
+
+        try {
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                showModal("Nenhuma venda encontrada no período para exportar.");
+                return;
+            }
+
+            const sanitizeCSVField = (field) => {
+                const str = String(field ?? '');
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            const headers = [
+                'ID Pedido', 'Data/Hora', 'Cliente', 'Telefone', 'Item Principal', 'Quantidade',
+                'Acompanhamentos', 'Observacoes', 'Total', 'Status'
+            ];
+            
+            let csvContent = headers.join(',') + '\r\n';
+
+            querySnapshot.forEach(docSnap => {
+                const venda = docSnap.data();
+                const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
+                
+                const isCombo = venda.pedidoCombo && !venda.tamanho;
+                const itemPrincipal = isCombo ? venda.pedidoCombo : venda.tamanho;
+                const quantidade = isCombo ? 1 : venda.quantidade;
+
+                const acompanhamentos = (venda.acompanhamentos || [])
+                    .map(a => `${a.name} (x${a.quantity})`)
+                    .join('; '); // Usar ponto e vírgula para evitar conflito com a vírgula do CSV
+
+                const row = [
+                    venda.orderId, data, venda.nomeCliente, venda.telefoneCliente,
+                    itemPrincipal, quantidade, acompanhamentos, venda.observacoes,
+                    venda.total, venda.status
+                ].map(sanitizeCSVField).join(',');
+
+                csvContent += row + '\r\n';
+            });
+
+            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            const today = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+            link.setAttribute("download", `relatorio_vendas_${today}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+        } catch (error) {
+            console.error("Erro ao exportar relatório: ", error);
+            showModal("Ocorreu um erro ao gerar o arquivo de exportação.");
+        }
     }
 
     function renderConfigAdmin() {
