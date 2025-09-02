@@ -52,14 +52,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
         <div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">🥤 Escolha o tamanho</h2><div id="tamanhos-container" class="flex flex-col sm:flex-row gap-3"><p class="text-gray-500">A carregar tamanhos...</p></div></div>
-           <div class="mb-4">
-    <button id="adicionar-copo-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl transition-all duration-300 ease-in-out shadow-md">
-        + Adicionar Copo ao Pedido
-    </button>
-</div>
-
-<div id="lista-copos-pedido" class="space-y-3 mb-6">
-    </div>
+            <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2 flex items-center"><img src="https://cdn-icons-png.flaticon.com/128/6357/6357756.png" alt="Quantidade" class="card-img"> Quantidade</h2><input type="number" id="quantidade" min="1" value="1" class="w-24 p-3 border-2 border-purple-300 rounded-xl text-center focus:ring-2 focus:ring-pink-400"></div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">👤 Seu Nome</h2><input type="text" id="nome-cliente" placeholder="Digite seu nome para o pedido" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📞 Telefone/WhatsApp</h2><input type="tel" id="telefone-cliente" placeholder="Seu número para contato" class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></div>
             <div class="mb-6"><h2 class="text-lg font-semibold text-purple-700 mb-2">📝 Observações</h2><textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 border-2 border-purple-300 rounded-xl focus:ring-2 focus:ring-pink-400"></textarea></div>
@@ -97,6 +90,7 @@
     <h2 class="text-lg font-bold">💰 Total: <span id="valor-mobile">R$0,00</span></h2>
     <button id="send-order-button-mobile" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-xl shadow-lg transition">📲 WhatsApp</button>
   </div>
+  
   <script src="modal.js"></script>
   <script src="script.js" type="module"></script>
 </body>
