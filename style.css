@@ -1,18 +1,39 @@
-body { scroll-behavior: smooth; }
-input[type=checkbox], input[type=radio] { width: 1.4em; height: 1.4em; }
-.card-img { 
-  width: 24px; 
-  height: 24px; 
-  object-fit: contain; 
-  margin-right: 8px; 
+body { 
+  scroll-behavior: smooth; 
+  font-family: 'Poppins', sans-serif;
 }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-.tab-active { border-color: #9333ea; background-color: #f3e8ff; color: #9333ea; }
+
+/* Estilos de rádio e checkbox personalizados */
+.radio-label, .checkbox-label {
+    transition: all 0.2s ease-in-out;
+}
+input:checked + .radio-label, input:checked + .checkbox-label {
+    border-color: #a855f7; /* purple-500 */
+    background-color: #f5f3ff; /* violet-100 */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2);
+}
+.tab-active { 
+    border-color: #9333ea; /* purple-700 */
+    background-color: #faf5ff; /* purple-50 */
+    color: #9333ea; /* purple-700 */
+}
 @keyframes slide-down {
     from { top: -100px; opacity: 0; }
     to { top: 20px; opacity: 1; }
 }
 .toast-notification {
     animation: slide-down 0.5s ease-out forwards;
+}
+#qrcode {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+#qrcode img {
+    border: 6px solid white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
