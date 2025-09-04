@@ -1,4 +1,3 @@
-// Toda a lógica de JavaScript foi mantida e não precisa de alterações.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -206,6 +205,10 @@ function resetarFormulario() {
         el.checked = false;
         el.dispatchEvent(new Event('change'));
     });
+    // Reset payment method to default (Dinheiro)
+    const dinheiroRadio = document.getElementById('payment-dinheiro');
+    if (dinheiroRadio) dinheiroRadio.checked = true;
+
     document.getElementById('quantidade').value = 1;
     document.getElementById('nome-cliente').value = '';
     document.getElementById('telefone-cliente').value = '';
@@ -244,6 +247,10 @@ async function enviarPedido() {
     const observacoes = document.getElementById("observacoes").value;
     const valor = document.getElementById("valor-mobile").innerText;
     
+    const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
+    if (!paymentMethodEl) { showModal("Por favor, selecione a forma de pagamento!"); return; }
+    const paymentMethod = paymentMethodEl.value;
+    
     const counterRef = doc(db, "configuracoes", "dailyCounter");
     let orderId;
     try {
@@ -277,14 +284,20 @@ async function enviarPedido() {
 
     const numero = storeSettings.whatsappNumber || "5514991962607";
     const acompanhamentosText = acompanhamentosSelecionados.map(a => `${a.name} (x${a.quantity})`).join("\n- ");
-    const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\n*Acompanhamentos:*\n- ${acompanhamentosSelecionados.length > 0 ? acompanhamentosText : 'Nenhum (Somente Açaí)'}\n\n📝 *Observações:* ${observacoes || "Nenhuma"}\n\n💰 *Valor Total: ${valor}*`;
+    const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\n*Acompanhamentos:*\n- ${acompanhamentosSelecionados.length > 0 ? acompanhamentosText : 'Nenhum (Somente Açaí)'}\n\n📝 *Observações:* ${observacoes || "Nenhuma"}\n\n*Forma de Pagamento:* ${paymentMethod}\n\n💰 *Valor Total: ${valor}*`;
     
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 
     try { 
-        await addDoc(collection(db, "vendas"), { orderId, nomeCliente, telefoneCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", timestamp: serverTimestamp() }); 
-        showPixModal(valor, orderId);
+        await addDoc(collection(db, "vendas"), { orderId, nomeCliente, telefoneCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", paymentMethod: paymentMethod, timestamp: serverTimestamp() }); 
+        
+        if (paymentMethod === 'PIX') {
+            showPixModal(valor, orderId);
+        } else {
+            showModal("Pedido enviado com sucesso! Agradecemos a preferência.");
+        }
         resetarFormulario();
+
     } catch (e) { 
         console.error("Erro ao salvar venda: ", e); 
         showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp."); 
@@ -306,6 +319,10 @@ window.pedirCombo = async (comboId) => {
     const telefoneCliente = document.getElementById('telefone-cliente').value.trim();
     if (!telefoneCliente) { showModal("Por favor, preencha seu telefone no formulário principal antes de pedir um combo!"); return; }
     
+    const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
+    if (!paymentMethodEl) { showModal("Por favor, selecione a forma de pagamento!"); return; }
+    const paymentMethod = paymentMethodEl.value;
+
     const counterRef = doc(db, "configuracoes", "dailyCounter");
     let orderId;
     try {
@@ -335,16 +352,22 @@ window.pedirCombo = async (comboId) => {
 
     const numero = storeSettings.whatsappNumber || "5514991962607";
     const valor = `R$${(combo.price || 0).toFixed(2).replace('.', ',')}`;
-    const msg = `*Pedido de Combo: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Gostaria de pedir o *${combo.name}*.\n\n*Descrição:* ${combo.description || ''}\n\n💰 *Valor Total: ${valor}*`;
+    const msg = `*Pedido de Combo: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Gostaria de pedir o *${combo.name}*.\n\n*Descrição:* ${combo.description || ''}\n\n*Forma de Pagamento:* ${paymentMethod}\n\n💰 *Valor Total: ${valor}*`;
     
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 
     try {
         const vendaData = {
-            orderId, nomeCliente, telefoneCliente, pedidoCombo: combo.name, observacoes: combo.description || "", total: valor, status: "pendente", timestamp: serverTimestamp(), tamanho: "", quantidade: 1, acompanhamentos: []
+            orderId, nomeCliente, telefoneCliente, pedidoCombo: combo.name, observacoes: combo.description || "", total: valor, status: "pendente", paymentMethod: paymentMethod, timestamp: serverTimestamp(), tamanho: "", quantidade: 1, acompanhamentos: []
         };
         await addDoc(collection(db, "vendas"), vendaData);
-        showPixModal(valor, orderId);
+        
+        if (paymentMethod === 'PIX') {
+            showPixModal(valor, orderId);
+        } else {
+            showModal("Pedido do combo enviado com sucesso! Agradecemos a preferência.");
+        }
+
     } catch (e) {
         console.error("Erro ao salvar venda do combo: ", e);
         showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp.");
@@ -450,7 +473,7 @@ async function toggleComboStatus(id) {
 }
 
 function renderVendasAdmin() {
-    document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded border-gray-300"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button><button id="exportar-relatorio-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Exportar CSV</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body" class="divide-y divide-gray-200"></tbody></table></div><div class="mt-4 flex justify-end items-start gap-8 pr-4"><div id="total-por-tamanho" class="text-right"></div><div class="text-right"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div></div>`;
+    document.getElementById('content-vendas').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Relatório de Vendas</h3><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date">De:</label><input type="date" id="start-date" class="p-2 border rounded border-gray-300"><label for="end-date">Até:</label><input type="date" id="end-date" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Gerar Relatório</button><button id="exportar-relatorio-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600">Exportar CSV</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">ID Pedido</th><th class="p-3">Data/Hora</th><th class="p-3">Cliente</th><th class="p-3">Pedido</th><th class="p-3">Pagamento</th><th class="p-3">Financeiro</th><th class="p-3">Status</th><th class="p-3">Ações</th></tr></thead><tbody id="vendas-table-body" class="divide-y divide-gray-200"></tbody></table></div><div class="mt-4 flex justify-end items-start gap-8 pr-4"><div id="total-por-tamanho" class="text-right"></div><div class="text-right"><h4 class="text-xl font-bold text-gray-800">Total das Vendas (Período): <span id="total-vendas" class="text-purple-700">R$0,00</span></h4></div></div></div>`;
     document.getElementById('gerar-relatorio-btn').addEventListener('click', () => carregarVendasAdmin(document.getElementById('start-date').value, document.getElementById('end-date').value));
     document.getElementById('exportar-relatorio-btn').addEventListener('click', exportarRelatorioVendas);
     carregarVendasAdmin();
@@ -485,7 +508,7 @@ async function exportarRelatorioVendas() {
 
         const headers = [
             'ID Pedido', 'Data/Hora', 'Cliente', 'Telefone', 'Item Principal', 'Quantidade',
-            'Acompanhamentos', 'Observacoes', 'Total', 'Status'
+            'Acompanhamentos', 'Observacoes', 'Pagamento', 'Total', 'Status'
         ];
         
         let csvContent = headers.join(',') + '\r\n';
@@ -500,12 +523,12 @@ async function exportarRelatorioVendas() {
 
             const acompanhamentos = (venda.acompanhamentos || [])
                 .map(a => `${a.name} (x${a.quantity})`)
-                .join('; '); // Usar ponto e vírgula para evitar conflito com a vírgula do CSV
+                .join('; ');
 
             const row = [
                 venda.orderId, data, venda.nomeCliente, venda.telefoneCliente,
                 itemPrincipal, quantidade, acompanhamentos, venda.observacoes,
-                venda.total, venda.status
+                venda.paymentMethod, venda.total, venda.status
             ].map(sanitizeCSVField).join(',');
 
             csvContent += row + '\r\n';
@@ -697,7 +720,7 @@ function carregarVendasAdmin(startDate, endDate) {
         const totaisPorTamanho = {};
 
         if (snapshot.empty) { 
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhuma venda encontrada.</td></tr>'; 
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-500">Nenhuma venda encontrada.</td></tr>'; 
             totalVendasSpan.innerText = 'R$0,00'; 
             totalPorTamanhoContainer.innerHTML = '';
         } else {
@@ -715,9 +738,17 @@ function carregarVendasAdmin(startDate, endDate) {
                 const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
                 const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>` : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
                 const financeiroHTML = isCombo ? `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>` : `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                const paymentIcon = venda.paymentMethod === 'PIX' ? '📱' : venda.paymentMethod === 'Cartão' ? '💳' : '💵';
+                const paymentHTML = `<span class="font-semibold">${venda.paymentMethod || 'N/A'} ${paymentIcon}</span>`;
+
                 tableBody.innerHTML += `<tr class="border-b-0">
-                    <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td><td class="p-3 text-sm">${data}</td><td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
-                    <td class="p-3 text-sm">${pedidoHTML}</td><td class="p-3 font-medium">${financeiroHTML}</td><td class="p-3 font-semibold ${venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600'} capitalize">${venda.status}</td>
+                    <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
+                    <td class="p-3 text-sm">${data}</td>
+                    <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
+                    <td class="p-3 text-sm">${pedidoHTML}</td>
+                    <td class="p-3 text-sm">${paymentHTML}</td>
+                    <td class="p-3 font-medium">${financeiroHTML}</td>
+                    <td class="p-3 font-semibold ${venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600'} capitalize">${venda.status}</td>
                     <td class="p-3">${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}<button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button></td>
                 </tr>`;
             }); 
@@ -888,7 +919,9 @@ function generatePixPayload(key, name, city, amountStr, txid) {
     const amount = parseFloat(amountStr.replace("R$", "").replace(",", ".")).toFixed(2);
     const normalizedName = normalizeText(name).toUpperCase();
     const normalizedCity = normalizeText(city).toUpperCase();
-    const cleanTxid = (txid || '***').replace(/[^a-zA-Z0-9]/g, '');
+    
+    // O txid para um PIX estático com valor definido deve ser '***'
+    const cleanTxid = '***';
 
     const merchantAccountInfo = formatField('00', 'br.gov.bcb.pix') + formatField('01', key);
     
@@ -978,3 +1011,4 @@ onSnapshot(collection(db, "combos"), (snapshot) => {
         combosSectionEl.classList.add('hidden');
     }
 });
+

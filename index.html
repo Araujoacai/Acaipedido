@@ -77,6 +77,29 @@
                 <label for="observacoes" class="text-xl font-semibold text-purple-700 mb-3 block">📝 Observações</label>
                 <textarea id="observacoes" rows="3" placeholder="Ex: pouco leite condensado..." class="w-full p-3 bg-white border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"></textarea>
             </div>
+            <div>
+                <h2 class="text-xl font-semibold text-purple-700 mb-3 block">💳 Forma de Pagamento</h2>
+                <div id="payment-method-container" class="grid grid-cols-3 gap-3">
+                    <div>
+                        <input type="radio" name="payment-method" value="Dinheiro" id="payment-dinheiro" class="hidden" checked>
+                        <label for="payment-dinheiro" class="radio-label block cursor-pointer p-3 border-2 border-gray-300 rounded-xl text-center bg-gray-50">
+                            <span class="font-semibold block text-sm sm:text-base">Dinheiro</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" name="payment-method" value="PIX" id="payment-pix" class="hidden">
+                        <label for="payment-pix" class="radio-label block cursor-pointer p-3 border-2 border-gray-300 rounded-xl text-center bg-gray-50">
+                            <span class="font-semibold block text-sm sm:text-base">PIX</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="radio" name="payment-method" value="Cartão" id="payment-cartao" class="hidden">
+                        <label for="payment-cartao" class="radio-label block cursor-pointer p-3 border-2 border-gray-300 rounded-xl text-center bg-gray-50">
+                            <span class="font-semibold block text-sm sm:text-base">Cartão</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Coluna Direita: Acompanhamentos -->
