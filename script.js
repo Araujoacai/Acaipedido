@@ -1011,18 +1011,13 @@ onSnapshot(collection(db, "combos"), (snapshot) => {
         combosSectionEl.classList.add('hidden');
     }
 });
-// NOVA FUNÇÃO para o botão flutuante do WhatsApp
+// FUNÇÃO ATUALIZADA para o botão flutuante do WhatsApp
 function updateFloatingWhatsAppButton() {
     const whatsAppBtn = document.getElementById('floating-whatsapp-button');
     if (whatsAppBtn) {
-        const numero = storeSettings.whatsappNumber || "5514991962607"; // Usa o número das config ou um fallback
+        // Usa o número das configurações ou um número padrão fixo se não houver um cadastrado.
+        const numero = storeSettings.whatsappNumber || "5514991962607";
         const msg = "Olá! Gostaria de tirar uma dúvida.";
-        
-        if (numero) {
-            whatsAppBtn.href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
-            whatsAppBtn.classList.remove('hidden');
-        } else {
-            whatsAppBtn.classList.add('hidden');
-        }
+        whatsAppBtn.href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
     }
 }
