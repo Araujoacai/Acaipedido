@@ -876,6 +876,18 @@ function checkStoreOpen() {
     });
 }
 
+// FUNÇÃO ATUALIZADA para o botão flutuante do WhatsApp
+function updateFloatingWhatsAppButton() {
+    const whatsAppBtn = document.getElementById('floating-whatsapp-button');
+    if (whatsAppBtn) {
+        // Usa o número das configurações ou um número padrão fixo se não houver um cadastrado.
+        const numero = storeSettings.whatsappNumber || "5514991962607";
+        const msg = "Olá! Gostaria de tirar uma dúvida.";
+        whatsAppBtn.href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
+    }
+}
+
+
 function openRecipeModal(id) {
     const produtoTamanho = produtos.find(p => p.id === id); if (!produtoTamanho) return;
     const insumos = produtos.filter(p => p.category === 'insumo');
@@ -1011,13 +1023,4 @@ onSnapshot(collection(db, "combos"), (snapshot) => {
         combosSectionEl.classList.add('hidden');
     }
 });
-// FUNÇÃO ATUALIZADA para o botão flutuante do WhatsApp
-function updateFloatingWhatsAppButton() {
-    const whatsAppBtn = document.getElementById('floating-whatsapp-button');
-    if (whatsAppBtn) {
-        // Usa o número das configurações ou um número padrão fixo se não houver um cadastrado.
-        const numero = storeSettings.whatsappNumber || "5514991962607";
-        const msg = "Olá! Gostaria de tirar uma dúvida.";
-        whatsAppBtn.href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
-    }
-}
+
