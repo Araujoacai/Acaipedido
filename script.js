@@ -20,6 +20,8 @@ let combos = [];
 let precosBase = {};
 let unsubscribeVendas;
 let unsubscribeFluxoCaixa;
+let unsubscribeDashboardVendas;
+let unsubscribeDashboardCaixa;
 let storeSettings = {};
 let isStoreOpen = true; 
 let initialVendasLoadComplete = false;
@@ -69,6 +71,8 @@ onAuthStateChanged(auth, user => {
         adminPanel.classList.add('hidden');
         if (unsubscribeVendas) unsubscribeVendas();
         if (unsubscribeFluxoCaixa) unsubscribeFluxoCaixa();
+        if (unsubscribeDashboardVendas) unsubscribeDashboardVendas(); // <-- ADICIONE ESTA LINHA
+        if (unsubscribeDashboardCaixa) unsubscribeDashboardCaixa(); // <-- ADICIONE ESTA LINHA
         initialVendasLoadComplete = false;
     }
 });
@@ -378,26 +382,44 @@ function renderAdminPanel() {
     adminPanel.innerHTML = `
         <h2 class="text-3xl font-bold text-center text-purple-700 mb-6">Painel de Administração</h2>
         <div class="flex border-b border-gray-200 mb-4 overflow-x-auto no-scrollbar">
-            <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active flex-shrink-0">Gerenciar Produtos</button>
+            <button id="tab-dashboard" class="tab-btn py-2 px-4 font-semibold border-b-2 tab-active flex-shrink-0">Visão Geral</button>
+            <button id="tab-produtos" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Gerenciar Produtos</button>
             <button id="tab-combos" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Gerenciar Combos</button>
             <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Relatório de Vendas</button>
             <button id="tab-caixa" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Fluxo de Caixa</button>
             <button id="tab-config" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Configurações</button>
         </div>
-        <div id="content-produtos"></div>
+        <div id="content-dashboard"></div>
+        <div id="content-produtos" class="hidden"></div>
         <div id="content-combos" class="hidden"></div>
         <div id="content-vendas" class="hidden"></div>
         <div id="content-caixa" class="hidden"></div>
         <div id="content-config" class="hidden"></div>
     `;
+    
+    renderDashboardAdmin(); // <-- ADICIONADO
     renderProdutosAdmin();
     renderCombosAdmin();
     renderVendasAdmin();
     renderCaixaAdmin();
     renderConfigAdmin();
     
-    const tabs = { produtos: document.getElementById('tab-produtos'), combos: document.getElementById('tab-combos'), vendas: document.getElementById('tab-vendas'), caixa: document.getElementById('tab-caixa'), config: document.getElementById('tab-config') };
-    const contents = { produtos: document.getElementById('content-produtos'), combos: document.getElementById('content-combos'), vendas: document.getElementById('content-vendas'), caixa: document.getElementById('content-caixa'), config: document.getElementById('content-config') };
+    const tabs = { 
+        dashboard: document.getElementById('tab-dashboard'), // <-- ADICIONADO
+        produtos: document.getElementById('tab-produtos'), 
+        combos: document.getElementById('tab-combos'), 
+        vendas: document.getElementById('tab-vendas'), 
+        caixa: document.getElementById('tab-caixa'), 
+        config: document.getElementById('tab-config') 
+    };
+    const contents = { 
+        dashboard: document.getElementById('content-dashboard'), // <-- ADICIONADO
+        produtos: document.getElementById('content-produtos'), 
+        combos: document.getElementById('content-combos'), 
+        vendas: document.getElementById('content-vendas'), 
+        caixa: document.getElementById('content-caixa'), 
+        config: document.getElementById('content-config') 
+    };
 
     Object.keys(tabs).forEach(key => {
         tabs[key].addEventListener('click', () => {
@@ -406,6 +428,142 @@ function renderAdminPanel() {
             tabs[key].classList.add('tab-active');
             contents[key].classList.remove('hidden');
         });
+    });
+}
+/**
+ * Renderiza o layout HTML do painel de Visão Geral (Dashboard).
+ */
+function renderDashboardAdmin() {
+    document.getElementById('content-dashboard').innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white p-5 rounded-xl shadow-lg border border-blue-200">
+            <h4 class="text-sm font-semibold text-blue-700">Saldo Atual (Total)</h4>
+            <p id="dashboard-saldo" class="text-3xl font-bold text-blue-600">R$0,00</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-lg border border-green-200">
+            <h4 class="text-sm font-semibold text-green-700">Vendas de Hoje</h4>
+            <p id="dashboard-vendas-hoje" class="text-3xl font-bold text-green-600">R$0,00</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-lg border border-yellow-200">
+            <h4 class="text-sm font-semibold text-yellow-700">Pedidos Pendentes (Hoje)</h4>
+            <p id="dashboard-pendentes" class="text-3xl font-bold text-yellow-600">0</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl shadow-lg border border-purple-200">
+            <h4 class="text-sm font-semibold text-purple-700">Total de Pedidos (Hoje)</h4>
+            <p id="dashboard-total-pedidos" class="text-3xl font-bold text-purple-600">0</p>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg">
+        <h3 class="text-2xl font-semibold mb-4 text-purple-700">Pedidos Pendentes de Hoje</h3>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="p-3">ID Pedido</th>
+                        <th class="p-3">Hora</th>
+                        <th class="p-3">Cliente</th>
+                        <th class="p-3">Pedido</th>
+                        <th class="p-3">Pagamento</th>
+                        <th class="p-3">Total</th>
+                        <th class="p-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="dashboard-vendas-pendentes-body" class="divide-y divide-gray-200">
+                    <tr><td colspan="7" class="text-center p-4 text-gray-500">Carregando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    `;
+    carregarDashboardData(); // Chama a função para carregar os dados
+}
+
+/**
+ * Carrega e monitora os dados para o painel de Visão Geral (Dashboard).
+ */
+function carregarDashboardData() {
+    
+    // 1. Carregar Saldo do Caixa (Total)
+    if (unsubscribeDashboardCaixa) unsubscribeDashboardCaixa();
+    const qCaixa = query(collection(db, "fluxoCaixa"));
+    unsubscribeDashboardCaixa = onSnapshot(qCaixa, (snapshot) => {
+        let totalEntradas = 0, totalSaidas = 0;
+        snapshot.docs.forEach(docSnap => {
+            const t = docSnap.data();
+            if (t.tipo === 'entrada') totalEntradas += (t.valor || 0);
+            else totalSaidas += (t.valor || 0);
+        });
+        const saldoEl = document.getElementById('dashboard-saldo');
+        if (saldoEl) saldoEl.innerText = `R$${(totalEntradas - totalSaidas).toFixed(2).replace('.', ',')}`;
+    });
+
+    // 2. Carregar Vendas de Hoje (para KPIs e tabela de pendentes)
+    if (unsubscribeDashboardVendas) unsubscribeDashboardVendas();
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+
+    const qVendas = query(collection(db, "vendas"), where("timestamp", ">=", startOfDay), where("timestamp", "<=", endOfDay), orderBy("timestamp", "desc"));
+    
+    unsubscribeDashboardVendas = onSnapshot(qVendas, (snapshot) => {
+        const tableBody = document.getElementById('dashboard-vendas-pendentes-body');
+        const vendasHojeEl = document.getElementById('dashboard-vendas-hoje');
+        const pendentesEl = document.getElementById('dashboard-pendentes');
+        const totalPedidosEl = document.getElementById('dashboard-total-pedidos');
+
+        if (!tableBody || !vendasHojeEl || !pendentesEl || !totalPedidosEl) return;
+
+        let totalVendasHoje = 0;
+        let pedidosPendentesCount = 0;
+        tableBody.innerHTML = ''; // Limpa a tabela para recarregar
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhum pedido hoje.</td></tr>';
+        } else {
+            snapshot.docs.forEach(docSnap => {
+                const venda = { id: docSnap.id, ...docSnap.data() };
+                const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+                if (!isNaN(valorNumerico)) {
+                    totalVendasHoje += valorNumerico;
+                }
+
+                // Adiciona à tabela apenas se estiver pendente
+                if (venda.status === 'pendente') {
+                    pedidosPendentesCount++;
+                    const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                    const isCombo = venda.pedidoCombo && !venda.tamanho;
+                    const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${venda.pedidoCombo}` : `${venda.quantidade}x ${venda.tamanho}`;
+                    const paymentIcon = venda.paymentMethod === 'PIX' ? '📱' : venda.paymentMethod === 'Cartão' ? '💳' : '💵';
+                    
+                    tableBody.innerHTML += `<tr class="border-b-0">
+                        <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
+                        <td class="p-3 text-sm">${data}</td>
+                        <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}</td>
+                        <td class="p-3 text-sm">${pedidoHTML}</td>
+                        <td class="p-3 text-sm">${venda.paymentMethod || 'N/A'} ${paymentIcon}</td>
+                        <td class="p-3 font-medium">${venda.total}</td>
+                        <td class="p-3">
+                            <button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>
+                            <button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button>
+                        </td>
+                    </tr>`;
+                }
+            });
+
+            if (pedidosPendentesCount === 0) {
+                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhum pedido pendente.</td></tr>';
+            }
+        }
+
+        // Atualiza os cartões (KPIs)
+        vendasHojeEl.innerText = `R$${totalVendasHoje.toFixed(2).replace('.', ',')}`;
+        pendentesEl.innerText = pedidosPendentesCount;
+        totalPedidosEl.innerText = snapshot.size; // Total de pedidos do dia
+
+        // Re-associa os eventos aos botões da tabela (importante!)
+        document.querySelectorAll('.confirm-venda-btn').forEach(btn => btn.addEventListener('click', e => confirmarVenda(e.currentTarget.dataset.id)));
+        document.querySelectorAll('.delete-venda-btn').forEach(btn => btn.addEventListener('click', e => deletarVenda(e.currentTarget.dataset.id)));
     });
 }
 
@@ -876,18 +1034,6 @@ function checkStoreOpen() {
     });
 }
 
-// FUNÇÃO ATUALIZADA para o botão flutuante do WhatsApp
-function updateFloatingWhatsAppButton() {
-    const whatsAppBtn = document.getElementById('floating-whatsapp-button');
-    if (whatsAppBtn) {
-        // Usa o número das configurações ou um número padrão fixo se não houver um cadastrado.
-        const numero = storeSettings.whatsappNumber || "5514991962607";
-        const msg = "Olá! Gostaria de tirar uma dúvida.";
-        whatsAppBtn.href = `https://wa.me/${numero}?text=${encodeURIComponent(msg)}`;
-    }
-}
-
-
 function openRecipeModal(id) {
     const produtoTamanho = produtos.find(p => p.id === id); if (!produtoTamanho) return;
     const insumos = produtos.filter(p => p.category === 'insumo');
@@ -1023,4 +1169,3 @@ onSnapshot(collection(db, "combos"), (snapshot) => {
         combosSectionEl.classList.add('hidden');
     }
 });
-
