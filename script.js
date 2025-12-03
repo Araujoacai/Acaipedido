@@ -50,14 +50,15 @@ function escapeHTML(str) {
 function showModal(content, onOpen = () => { }) {
     let modalContent = content;
     if (typeof content === 'string') {
-        modalContent = `<p class="text-lg text-gray-800 mb-6">${content}</p><button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>`;
+        modalContent = `<p class="text-lg text-gray-800 mb-6 font-medium">${content}</p><button onclick="window.closeModal()" class="bg-brand-purple hover:bg-brand-light text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg hover:shadow-xl">OK</button>`;
     }
-    modalContainer.innerHTML = `<div class="bg-white border border-purple-200 text-gray-800 rounded-2xl p-6 w-full max-w-md text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
+    modalContainer.innerHTML = `<div class="glass bg-white/90 text-gray-800 rounded-3xl p-8 w-full max-w-md text-center shadow-2xl transform transition-all scale-95 opacity-0 border border-white/50" id="modal-box">${modalContent}</div>`;
     modalContainer.classList.remove('hidden');
     setTimeout(() => {
         const modalBox = document.getElementById('modal-box');
         if (modalBox) {
             modalBox.classList.remove('scale-95', 'opacity-0');
+            modalBox.classList.add('scale-100', 'opacity-100');
         }
         onOpen();
     }, 10);
@@ -113,22 +114,27 @@ function renderMenu() {
             precosBase[p.name] = p.price;
             containers.tamanho.innerHTML += `
                 <div>
-                    <input type="radio" name="tamanho" value="${p.name}" id="tamanho-${pId}" class="hidden">
-                    <label for="tamanho-${pId}" class="radio-label block cursor-pointer p-3 border-2 border-gray-300 rounded-xl text-center bg-gray-50">
-                        <span class="font-semibold block">${p.name}</span>
-                        <span class="text-sm text-gray-500">R$${p.price.toFixed(2)}</span>
+                    <input type="radio" name="tamanho" value="${p.name}" id="tamanho-${pId}" class="peer hidden">
+                    <label for="tamanho-${pId}" class="block cursor-pointer p-4 border-2 border-gray-100 rounded-2xl text-center bg-white peer-checked:border-brand-purple peer-checked:bg-purple-50 transition-all hover:shadow-md h-full flex flex-col justify-center gap-1">
+                        <span class="font-bold text-gray-800 block text-lg">${p.name}</span>
+                        <span class="text-sm font-semibold text-brand-purple">R$${p.price.toFixed(2)}</span>
                     </label>
                 </div>`;
         } else {
             if (containers[p.category]) {
                 containers[p.category].innerHTML += `
-                <div class="relative">
-                  <input type="checkbox" value="${p.name}" data-qty-target="qty-${pId}" id="check-${pId}" class="acompanhamento-check hidden">
-                   <label for="check-${pId}" class="checkbox-label cursor-pointer flex items-center bg-gray-50 p-3 border-2 border-gray-300 rounded-xl">
-                      <img src="${p.iconUrl || 'https://placehold.co/24x24/7c3aed/f3e8ff?text=AC'}" alt="${p.name}" class="w-6 h-6 object-contain mr-3 flex-shrink-0 rounded-full" onerror="this.src='https://placehold.co/24x24/7c3aed/f3e8ff?text=AC'">
-                      <span class="flex-grow truncate font-medium">${p.name}</span>
+                <div class="relative group">
+                  <input type="checkbox" value="${p.name}" data-qty-target="qty-${pId}" id="check-${pId}" class="acompanhamento-check peer hidden">
+                   <label for="check-${pId}" class="cursor-pointer flex items-center bg-white p-3 border border-gray-100 rounded-xl hover:shadow-md transition-all peer-checked:border-brand-purple peer-checked:bg-purple-50">
+                      <img src="${p.iconUrl || 'https://placehold.co/40x40/f3e8ff/9333ea?text=' + p.name.charAt(0)}" alt="${p.name}" class="w-10 h-10 object-cover mr-3 flex-shrink-0 rounded-full shadow-sm bg-gray-100" onerror="this.src='https://placehold.co/40x40/f3e8ff/9333ea?text=' + this.alt.charAt(0)">
+                      <div class="flex-grow min-w-0">
+                        <span class="block font-semibold text-gray-700 truncate text-sm">${p.name}</span>
+                        <span class="text-xs text-gray-400">R$${(p.cost || 0).toFixed(2)}</span>
+                      </div>
                    </label>
-                   <input type="number" value="1" min="1" id="qty-${pId}" class="acompanhamento-qty w-16 text-center border-gray-300 bg-white rounded-md absolute right-2 top-1/2 -translate-y-1/2 p-1 hidden">
+                   <div class="absolute right-2 top-1/2 -translate-y-1/2 hidden peer-checked:flex items-center gap-1 bg-white rounded-lg shadow-sm border border-purple-100 p-1">
+                        <input type="number" value="1" min="1" id="qty-${pId}" class="acompanhamento-qty w-12 text-center text-sm font-bold text-brand-purple outline-none bg-transparent">
+                   </div>
                 </div>`;
             }
         }
@@ -138,12 +144,10 @@ function renderMenu() {
         check.addEventListener('change', (e) => {
             const qtyInput = document.getElementById(e.target.dataset.qtyTarget);
             if (e.target.checked) {
-                qtyInput.classList.remove('hidden');
+                qtyInput.parentElement.querySelector('.absolute').classList.remove('hidden'); // Show qty container
                 qtyInput.value = 1;
-                e.target.nextElementSibling.classList.add('pr-20');
             } else {
-                qtyInput.classList.add('hidden');
-                e.target.nextElementSibling.classList.remove('pr-20');
+                qtyInput.parentElement.querySelector('.absolute').classList.add('hidden'); // Hide qty container
             }
             calcularValor();
         });
@@ -167,13 +171,20 @@ function renderCombosMenu() {
     section.classList.remove('hidden');
     combosAtivos.forEach(combo => {
         container.innerHTML += `
-            <div class="bg-white/60 p-4 rounded-2xl shadow-md flex flex-col border border-purple-200">
-                <img src="${combo.imageUrl || 'https://placehold.co/600x400/f3e8ff/9333ea?text=Combo'}" alt="${combo.name}" class="w-full h-32 object-cover rounded-lg mb-3">
-                <h4 class="text-lg font-bold text-purple-800">${combo.name}</h4>
-                <p class="text-sm text-gray-600 flex-grow">${combo.description}</p>
-                <div class="flex justify-between items-center mt-3">
-                    <span class="text-xl font-bold text-green-600">R$${(combo.price || 0).toFixed(2).replace('.', ',')}</span>
-                    <button onclick="window.pedirCombo('${combo.id}')" class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-2 px-4 rounded-lg transition">Pedir</button>
+            <div class="glass bg-white/80 p-0 rounded-3xl shadow-lg flex flex-col border border-white/50 overflow-hidden hover:scale-[1.02] transition-transform duration-300">
+                <div class="h-40 w-full bg-gray-200 relative">
+                    <img src="${combo.imageUrl || 'https://placehold.co/600x400/f3e8ff/9333ea?text=Combo'}" alt="${combo.name}" class="w-full h-full object-cover">
+                    <div class="absolute top-3 right-3 bg-brand-green text-white font-bold px-3 py-1 rounded-full text-sm shadow-md">
+                        R$${(combo.price || 0).toFixed(2).replace('.', ',')}
+                    </div>
+                </div>
+                <div class="p-5 flex flex-col flex-grow">
+                    <h4 class="text-xl font-display font-bold text-brand-purple mb-2">${combo.name}</h4>
+                    <p class="text-sm text-gray-600 flex-grow mb-4 leading-relaxed">${combo.description}</p>
+                    <button onclick="window.pedirCombo('${combo.id}')" class="w-full bg-brand-purple hover:bg-brand-light text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2">
+                        <span>Pedir Agora</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 7a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H-0.5A.5.5 0 0 1-1 7z"/></svg>
+                    </button>
                 </div>
             </div>
         `;
