@@ -3,12 +3,12 @@ import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from
 import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, getDoc, setDoc, runTransaction, getDocs } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
-  authDomain: "salvapropagandas.firebaseapp.com",
-  projectId: "salvapropagandas",
-  storageBucket: "salvapropagandas.appspot.com",
-  messagingSenderId: "285635693052",
-  appId: "1:285635693052:web:260476698696d303be0a79"
+    apiKey: "AIzaSyCKZ-9QMY5ziW7uJIano6stDzHDKm8KqnE",
+    authDomain: "salvapropagandas.firebaseapp.com",
+    projectId: "salvapropagandas",
+    storageBucket: "salvapropagandas.appspot.com",
+    messagingSenderId: "285635693052",
+    appId: "1:285635693052:web:260476698696d303be0a79"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -23,7 +23,7 @@ let unsubscribeFluxoCaixa;
 let unsubscribeDashboardVendas;
 let unsubscribeDashboardCaixa;
 let storeSettings = {};
-let isStoreOpen = true; 
+let isStoreOpen = true;
 let initialVendasLoadComplete = false;
 
 const menuContainer = document.getElementById('menu-container');
@@ -35,19 +35,31 @@ const modalContainer = document.getElementById('modal-container');
 const sendOrderBtnMobile = document.getElementById('send-order-button-mobile');
 const sendOrderBtnDesktop = document.getElementById('send-order-button-desktop');
 
-function showModal(content, onOpen = () => {}) {
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"]/g,
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag]));
+}
+
+function showModal(content, onOpen = () => { }) {
     let modalContent = content;
     if (typeof content === 'string') {
         modalContent = `<p class="text-lg text-gray-800 mb-6">${content}</p><button onclick="window.closeModal()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-8 rounded-lg transition-colors">OK</button>`;
     }
     modalContainer.innerHTML = `<div class="bg-white border border-purple-200 text-gray-800 rounded-2xl p-6 w-full max-w-md text-center shadow-xl transform transition-all scale-95 opacity-0" id="modal-box">${modalContent}</div>`;
     modalContainer.classList.remove('hidden');
-    setTimeout(() => { 
+    setTimeout(() => {
         const modalBox = document.getElementById('modal-box');
         if (modalBox) {
             modalBox.classList.remove('scale-95', 'opacity-0');
         }
-        onOpen(); 
+        onOpen();
     }, 10);
 }
 
@@ -65,8 +77,8 @@ onAuthStateChanged(auth, user => {
         renderAdminPanel();
     } else {
         adminLoginBtn.classList.remove('hidden'); adminLogoutBtn.classList.add('hidden'); menuContainer.classList.remove('hidden');
-        if (document.body.clientWidth < 1024) { 
-             whatsappBar.classList.remove('hidden');
+        if (document.body.clientWidth < 1024) {
+            whatsappBar.classList.remove('hidden');
         }
         adminPanel.classList.add('hidden');
         if (unsubscribeVendas) unsubscribeVendas();
@@ -80,7 +92,7 @@ onAuthStateChanged(auth, user => {
 adminLoginBtn.addEventListener('click', () => {
     const loginFormHTML = `<h3 class="text-xl font-bold mb-4">Login Admin</h3><input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2 bg-gray-100 border-gray-300 text-gray-800"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4 bg-gray-100 border-gray-300 text-gray-800"><button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
     showModal(loginFormHTML, () => {
-         document.getElementById('login-submit').addEventListener('click', async () => {
+        document.getElementById('login-submit').addEventListener('click', async () => {
             try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); closeModal(); } catch (error) { console.error("Erro de login:", error); alert("Email ou senha inválidos."); }
         });
     });
@@ -90,11 +102,11 @@ adminLogoutBtn.addEventListener('click', () => signOut(auth));
 
 function renderMenu() {
     const containers = { tamanho: document.getElementById('tamanhos-container'), fruta: document.getElementById('frutas-container'), creme: document.getElementById('cremes-container'), outro: document.getElementById('outros-container') };
-    Object.values(containers).forEach(c => { if(c) c.innerHTML = ''; });
+    Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
     precosBase = {};
     const produtosVisiveis = produtos.filter(p => p.category !== 'insumo' && p.isActive !== false);
-    if (produtosVisiveis.length === 0) { Object.values(containers).forEach(c => { if(c) c.innerHTML = '<p class="text-red-500 text-sm col-span-full">Nenhum item. Faça login como admin para adicionar produtos.</p>'; }); return; }
-    
+    if (produtosVisiveis.length === 0) { Object.values(containers).forEach(c => { if (c) c.innerHTML = '<p class="text-red-500 text-sm col-span-full">Nenhum item. Faça login como admin para adicionar produtos.</p>'; }); return; }
+
     produtosVisiveis.forEach(p => {
         const pId = p.name.replace(/[^a-zA-Z0-9]/g, '');
         if (p.category === 'tamanho' && containers.tamanho) {
@@ -108,7 +120,7 @@ function renderMenu() {
                     </label>
                 </div>`;
         } else {
-            if(containers[p.category]) { 
+            if (containers[p.category]) {
                 containers[p.category].innerHTML += `
                 <div class="relative">
                   <input type="checkbox" value="${p.name}" data-qty-target="qty-${pId}" id="check-${pId}" class="acompanhamento-check hidden">
@@ -128,10 +140,10 @@ function renderMenu() {
             if (e.target.checked) {
                 qtyInput.classList.remove('hidden');
                 qtyInput.value = 1;
-                e.target.nextElementSibling.classList.add('pr-20'); 
+                e.target.nextElementSibling.classList.add('pr-20');
             } else {
                 qtyInput.classList.add('hidden');
-                 e.target.nextElementSibling.classList.remove('pr-20');
+                e.target.nextElementSibling.classList.remove('pr-20');
             }
             calcularValor();
         });
@@ -147,7 +159,7 @@ function renderCombosMenu() {
     container.innerHTML = '';
     const combosAtivos = combos.filter(c => c.isActive !== false);
 
-    if(combosAtivos.length === 0) {
+    if (combosAtivos.length === 0) {
         section.classList.add('hidden');
         return;
     }
@@ -177,7 +189,7 @@ function calcularValor() {
     if (tamanhoEl) {
         const tamanho = tamanhoEl.value;
         const quantidade = parseInt(document.getElementById("quantidade").value) || 0;
-        
+
         let totalPorcoes = 0;
         document.querySelectorAll('.acompanhamento-check:checked').forEach(check => {
             const qtyInput = document.getElementById(check.dataset.qtyTarget);
@@ -186,13 +198,13 @@ function calcularValor() {
 
         let precoBase = precosBase[tamanho] || 0;
         let adicionais = 0;
-        
+
         if (apenasAcai) {
             adicionais = totalPorcoes * 3;
-            if(rulesText) rulesText.textContent = 'Todos os acompanhamentos são cobrados como extra (R$3 cada).';
+            if (rulesText) rulesText.textContent = 'Todos os acompanhamentos são cobrados como extra (R$3 cada).';
         } else {
             adicionais = totalPorcoes > 3 ? (totalPorcoes - 3) * 3 : 0;
-            if(rulesText) rulesText.textContent = '3 porções por copo | Adicional R$3 por porção extra';
+            if (rulesText) rulesText.textContent = '3 porções por copo | Adicional R$3 por porção extra';
         }
 
         let total = (precoBase + adicionais) * quantidade;
@@ -200,8 +212,8 @@ function calcularValor() {
     }
     const valorMobileEl = document.getElementById("valor-mobile");
     const valorDesktopEl = document.getElementById("valor-desktop");
-    if(valorMobileEl) valorMobileEl.innerText = totalText;
-    if(valorDesktopEl) valorDesktopEl.innerText = totalText;
+    if (valorMobileEl) valorMobileEl.innerText = totalText;
+    if (valorDesktopEl) valorDesktopEl.innerText = totalText;
 }
 
 function resetarFormulario() {
@@ -236,7 +248,7 @@ async function enviarPedido() {
     if (!nomeCliente) { showModal("Por favor, digite seu nome!"); return; }
     const telefoneCliente = document.getElementById('telefone-cliente').value.trim();
     if (!telefoneCliente) { showModal("Por favor, digite seu telefone!"); return; }
-    
+
     const acompanhamentosSelecionados = [];
     document.querySelectorAll('.acompanhamento-check:checked').forEach(check => {
         const nome = check.value;
@@ -247,14 +259,14 @@ async function enviarPedido() {
 
     const apenasAcai = document.getElementById('apenas-acai-check').checked;
     if (!apenasAcai && acompanhamentosSelecionados.length === 0) { showModal("Por favor, selecione ao menos 1 acompanhamento ou marque 'Apenas Açaí'."); return; }
-    
+
     const observacoes = document.getElementById("observacoes").value;
     const valor = document.getElementById("valor-mobile").innerText;
-    
+
     const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
     if (!paymentMethodEl) { showModal("Por favor, selecione a forma de pagamento!"); return; }
     const paymentMethod = paymentMethodEl.value;
-    
+
     const counterRef = doc(db, "configuracoes", "dailyCounter");
     let orderId;
     try {
@@ -271,10 +283,10 @@ async function enviarPedido() {
             if (counterDoc.exists() && counterDoc.data().lastOrderDate === todayStr) {
                 newCount = counterDoc.data().lastOrderNumber + 1;
             }
-            
-            transaction.set(counterRef, { 
+
+            transaction.set(counterRef, {
                 lastOrderNumber: newCount,
-                lastOrderDate: todayStr 
+                lastOrderDate: todayStr
             });
 
             const paddedCount = String(newCount).padStart(3, '0');
@@ -289,12 +301,12 @@ async function enviarPedido() {
     const numero = storeSettings.whatsappNumber || "5514991962607";
     const acompanhamentosText = acompanhamentosSelecionados.map(a => `${a.name} (x${a.quantity})`).join("\n- ");
     const msg = `*Novo Pedido: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Quero pedir ${quantidade} copo(s) de açaí ${tamanhoEl.value}.\n\n*Acompanhamentos:*\n- ${acompanhamentosSelecionados.length > 0 ? acompanhamentosText : 'Nenhum (Somente Açaí)'}\n\n📝 *Observações:* ${observacoes || "Nenhuma"}\n\n*Forma de Pagamento:* ${paymentMethod}\n\n💰 *Valor Total: ${valor}*`;
-    
+
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 
-    try { 
-        await addDoc(collection(db, "vendas"), { orderId, nomeCliente, telefoneCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", paymentMethod: paymentMethod, timestamp: serverTimestamp() }); 
-        
+    try {
+        await addDoc(collection(db, "vendas"), { orderId, nomeCliente, telefoneCliente, tamanho: tamanhoEl.value, quantidade: parseInt(quantidade), acompanhamentos: acompanhamentosSelecionados, observacoes: observacoes || "Nenhuma", total: valor, status: "pendente", paymentMethod: paymentMethod, timestamp: serverTimestamp() });
+
         if (paymentMethod === 'PIX') {
             showPixModal(valor, orderId);
         } else {
@@ -302,9 +314,9 @@ async function enviarPedido() {
         }
         resetarFormulario();
 
-    } catch (e) { 
-        console.error("Erro ao salvar venda: ", e); 
-        showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp."); 
+    } catch (e) {
+        console.error("Erro ao salvar venda: ", e);
+        showModal("Ocorreu um erro ao salvar seu pedido no nosso sistema, mas você pode enviá-lo pelo WhatsApp.");
     }
 }
 
@@ -322,7 +334,7 @@ window.pedirCombo = async (comboId) => {
     if (!nomeCliente) { showModal("Por favor, preencha seu nome no formulário principal antes de pedir um combo!"); return; }
     const telefoneCliente = document.getElementById('telefone-cliente').value.trim();
     if (!telefoneCliente) { showModal("Por favor, preencha seu telefone no formulário principal antes de pedir um combo!"); return; }
-    
+
     const paymentMethodEl = document.querySelector('input[name="payment-method"]:checked');
     if (!paymentMethodEl) { showModal("Por favor, selecione a forma de pagamento!"); return; }
     const paymentMethod = paymentMethodEl.value;
@@ -343,7 +355,7 @@ window.pedirCombo = async (comboId) => {
             if (counterDoc.exists() && counterDoc.data().lastOrderDate === todayStr) {
                 newCount = counterDoc.data().lastOrderNumber + 1;
             }
-            
+
             transaction.set(counterRef, { lastOrderNumber: newCount, lastOrderDate: todayStr });
             const paddedCount = String(newCount).padStart(3, '0');
             return `${displayDate}-${paddedCount}`;
@@ -357,7 +369,7 @@ window.pedirCombo = async (comboId) => {
     const numero = storeSettings.whatsappNumber || "5514991962607";
     const valor = `R$${(combo.price || 0).toFixed(2).replace('.', ',')}`;
     const msg = `*Pedido de Combo: ${orderId}*\n\n*Cliente:* ${nomeCliente}\n*Telefone:* ${telefoneCliente}\n\nOlá! Gostaria de pedir o *${combo.name}*.\n\n*Descrição:* ${combo.description || ''}\n\n*Forma de Pagamento:* ${paymentMethod}\n\n💰 *Valor Total: ${valor}*`;
-    
+
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(msg)}`, "_blank");
 
     try {
@@ -365,7 +377,7 @@ window.pedirCombo = async (comboId) => {
             orderId, nomeCliente, telefoneCliente, pedidoCombo: combo.name, observacoes: combo.description || "", total: valor, status: "pendente", paymentMethod: paymentMethod, timestamp: serverTimestamp(), tamanho: "", quantidade: 1, acompanhamentos: []
         };
         await addDoc(collection(db, "vendas"), vendaData);
-        
+
         if (paymentMethod === 'PIX') {
             showPixModal(valor, orderId);
         } else {
@@ -396,29 +408,29 @@ function renderAdminPanel() {
         <div id="content-caixa" class="hidden"></div>
         <div id="content-config" class="hidden"></div>
     `;
-    
+
     renderDashboardAdmin(); // <-- ADICIONADO
     renderProdutosAdmin();
     renderCombosAdmin();
     renderVendasAdmin();
     renderCaixaAdmin();
     renderConfigAdmin();
-    
-    const tabs = { 
+
+    const tabs = {
         dashboard: document.getElementById('tab-dashboard'), // <-- ADICIONADO
-        produtos: document.getElementById('tab-produtos'), 
-        combos: document.getElementById('tab-combos'), 
-        vendas: document.getElementById('tab-vendas'), 
-        caixa: document.getElementById('tab-caixa'), 
-        config: document.getElementById('tab-config') 
+        produtos: document.getElementById('tab-produtos'),
+        combos: document.getElementById('tab-combos'),
+        vendas: document.getElementById('tab-vendas'),
+        caixa: document.getElementById('tab-caixa'),
+        config: document.getElementById('tab-config')
     };
-    const contents = { 
+    const contents = {
         dashboard: document.getElementById('content-dashboard'), // <-- ADICIONADO
-        produtos: document.getElementById('content-produtos'), 
-        combos: document.getElementById('content-combos'), 
-        vendas: document.getElementById('content-vendas'), 
-        caixa: document.getElementById('content-caixa'), 
-        config: document.getElementById('content-config') 
+        produtos: document.getElementById('content-produtos'),
+        combos: document.getElementById('content-combos'),
+        vendas: document.getElementById('content-vendas'),
+        caixa: document.getElementById('content-caixa'),
+        config: document.getElementById('content-config')
     };
 
     Object.keys(tabs).forEach(key => {
@@ -483,7 +495,7 @@ function renderDashboardAdmin() {
  * Carrega e monitora os dados para o painel de Visão Geral (Dashboard).
  */
 function carregarDashboardData() {
-    
+
     // 1. Carregar Saldo do Caixa (Total)
     if (unsubscribeDashboardCaixa) unsubscribeDashboardCaixa();
     const qCaixa = query(collection(db, "fluxoCaixa"));
@@ -505,7 +517,7 @@ function carregarDashboardData() {
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
 
     const qVendas = query(collection(db, "vendas"), where("timestamp", ">=", startOfDay), where("timestamp", "<=", endOfDay), orderBy("timestamp", "desc"));
-    
+
     unsubscribeDashboardVendas = onSnapshot(qVendas, (snapshot) => {
         const tableBody = document.getElementById('dashboard-vendas-pendentes-body');
         const vendasHojeEl = document.getElementById('dashboard-vendas-hoje');
@@ -533,16 +545,16 @@ function carregarDashboardData() {
                     pedidosPendentesCount++;
                     const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : 'N/A';
                     const isCombo = venda.pedidoCombo && !venda.tamanho;
-                    const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${venda.pedidoCombo}` : `${venda.quantidade}x ${venda.tamanho}`;
+                    const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${escapeHTML(venda.pedidoCombo)}` : `${venda.quantidade}x ${escapeHTML(venda.tamanho)}`;
                     const paymentIcon = venda.paymentMethod === 'PIX' ? '📱' : venda.paymentMethod === 'Cartão' ? '💳' : '💵';
-                    
+
                     tableBody.innerHTML += `<tr class="border-b-0">
-                        <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
+                        <td class="p-3 text-sm font-mono">${escapeHTML(venda.orderId || 'N/A')}</td>
                         <td class="p-3 text-sm">${data}</td>
-                        <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}</td>
+                        <td class="p-3 text-sm font-semibold">${escapeHTML(venda.nomeCliente || 'N/A')}</td>
                         <td class="p-3 text-sm">${pedidoHTML}</td>
-                        <td class="p-3 text-sm">${venda.paymentMethod || 'N/A'} ${paymentIcon}</td>
-                        <td class="p-3 font-medium">${venda.total}</td>
+                        <td class="p-3 text-sm">${escapeHTML(venda.paymentMethod || 'N/A')} ${paymentIcon}</td>
+                        <td class="p-3 font-medium">${escapeHTML(venda.total)}</td>
                         <td class="p-3">
                             <button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>
                             <button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button>
@@ -552,7 +564,7 @@ function carregarDashboardData() {
             });
 
             if (pedidosPendentesCount === 0) {
-                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhum pedido pendente.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Nenhum pedido pendente.</td></tr>';
             }
         }
 
@@ -584,7 +596,7 @@ async function salvarCombo() {
     const combo = { name: document.getElementById('combo-nome').value, price: parseFloat(document.getElementById('combo-preco').value) || 0, description: document.getElementById('combo-descricao').value, imageUrl: document.getElementById('combo-imagem').value, isActive: true };
     if (!combo.name || !combo.description || combo.price <= 0) { showModal("Nome, Descrição e Preço válido são obrigatórios."); return; }
     try {
-        if (id) { const existingCombo = combos.find(c => c.id === id); if(existingCombo) combo.isActive = existingCombo.isActive; await updateDoc(doc(db, "combos", id), combo); } else { await addDoc(collection(db, "combos"), combo); }
+        if (id) { const existingCombo = combos.find(c => c.id === id); if (existingCombo) combo.isActive = existingCombo.isActive; await updateDoc(doc(db, "combos", id), combo); } else { await addDoc(collection(db, "combos"), combo); }
         document.getElementById('combo-id').value = ''; document.getElementById('combo-nome').value = ''; document.getElementById('combo-preco').value = ''; document.getElementById('combo-descricao').value = ''; document.getElementById('combo-imagem').value = '';
     } catch (error) { console.error("Erro ao salvar combo:", error); showModal("Não foi possível salvar o combo."); }
 }
@@ -600,7 +612,7 @@ function carregarCombosAdmin() {
         snapshot.forEach(docSnap => {
             const c = { id: docSnap.id, ...docSnap.data() };
             const isInactive = c.isActive === false;
-            grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-start ${isInactive ? 'opacity-50' : ''}"><div class="flex-grow"><p class="font-bold">${c.name}</p><p class="text-sm text-gray-600">${c.description}</p><p class="text-md font-semibold text-green-700 mt-1">R$${(c.price || 0).toFixed(2)}</p></div><div class="flex flex-col ml-2"><button class="toggle-combo-btn p-1 text-white rounded mb-1 ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${c.id}">${isInactive ? '🚫' : '👁️'}</button><button class="edit-combo-btn p-1 text-blue-500" data-id="${c.id}">✏️</button><button class="delete-combo-btn p-1 text-red-500" data-id="${c.id}">🗑️</button></div></div>`;
+            grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-start ${isInactive ? 'opacity-50' : ''}"><div class="flex-grow"><p class="font-bold">${escapeHTML(c.name)}</p><p class="text-sm text-gray-600">${escapeHTML(c.description)}</p><p class="text-md font-semibold text-green-700 mt-1">R$${(c.price || 0).toFixed(2)}</p></div><div class="flex flex-col ml-2"><button class="toggle-combo-btn p-1 text-white rounded mb-1 ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${c.id}">${isInactive ? '🚫' : '👁️'}</button><button class="edit-combo-btn p-1 text-blue-500" data-id="${c.id}">✏️</button><button class="delete-combo-btn p-1 text-red-500" data-id="${c.id}">🗑️</button></div></div>`;
         });
         container.appendChild(grid);
         document.querySelectorAll('.edit-combo-btn').forEach(btn => btn.addEventListener('click', (e) => editarCombo(e.currentTarget.dataset.id)));
@@ -668,13 +680,13 @@ async function exportarRelatorioVendas() {
             'ID Pedido', 'Data/Hora', 'Cliente', 'Telefone', 'Item Principal', 'Quantidade',
             'Acompanhamentos', 'Observacoes', 'Pagamento', 'Total', 'Status'
         ];
-        
+
         let csvContent = headers.join(',') + '\r\n';
 
         querySnapshot.forEach(docSnap => {
             const venda = docSnap.data();
             const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
-            
+
             const isCombo = venda.pedidoCombo && !venda.tamanho;
             const itemPrincipal = isCombo ? venda.pedidoCombo : venda.tamanho;
             const quantidade = isCombo ? 1 : venda.quantidade;
@@ -713,7 +725,7 @@ async function exportarRelatorioVendas() {
 function renderConfigAdmin() {
     const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
     let diasHTML = dias.map(dia => `<div class="grid grid-cols-1 sm:grid-cols-10 gap-x-4 gap-y-2 items-center mb-3 pb-3 border-b border-gray-200 last:border-b-0"><span class="font-semibold capitalize sm:col-span-3">${dia}-feira</span><input type="time" id="${dia}-abertura" class="p-2 border rounded w-full sm:col-span-3 border-gray-300"><input type="time" id="${dia}-fechamento" class="p-2 border rounded w-full sm:col-span-3 border-gray-300"><label class="flex items-center gap-2 sm:justify-self-center sm:col-span-1"><input type="checkbox" id="${dia}-aberto" class="w-5 h-5 accent-purple-600"> Aberto</label></div>`).join('');
-    
+
     document.getElementById('content-config').innerHTML = `
         <div class="bg-white p-6 rounded-2xl shadow-lg">
             <h3 class="text-2xl font-semibold mb-4 text-purple-700">Configurações Gerais</h3>
@@ -771,7 +783,7 @@ function carregarProdutosAdmin() {
         const container = document.getElementById('lista-produtos-admin');
         if (!container) return;
         const produtosPorCategoria = { tamanho: [], fruta: [], creme: [], outro: [], insumo: [] };
-        snapshot.docs.forEach(docSnap => { const p = { id: docSnap.id, ...docSnap.data() }; if(produtosPorCategoria[p.category]) produtosPorCategoria[p.category].push(p); });
+        snapshot.docs.forEach(docSnap => { const p = { id: docSnap.id, ...docSnap.data() }; if (produtosPorCategoria[p.category]) produtosPorCategoria[p.category].push(p); });
         container.innerHTML = '';
         for (const categoria in produtosPorCategoria) {
             container.innerHTML += `<h4 class="text-xl font-medium mt-6 mb-2 capitalize text-purple-600">${categoria}s</h4>`;
@@ -779,7 +791,7 @@ function carregarProdutosAdmin() {
             grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
             produtosPorCategoria[categoria].forEach(p => {
                 const isInactive = p.isActive === false;
-                grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-center ${isInactive ? 'opacity-50' : ''}"><div><p class="font-bold">${p.name}</p><p class="text-sm text-gray-600">Venda: R$${(p.price || 0).toFixed(2)} | Custo: R$${(p.cost || 0).toFixed(2)} / ${p.unit}</p></div><div class="flex items-center">${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}">${isInactive ? '🚫' : '👁️'}</button>` : ''}${p.category === 'tamanho' ? `<button class="recipe-btn p-1 text-green-500" data-id="${p.id}">⚙️</button>` : ''}<button class="edit-produto-btn p-1 text-blue-500" data-id="${p.id}">✏️</button><button class="delete-produto-btn p-1 text-red-500" data-id="${p.id}">🗑️</button></div></div>`;
+                grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-center ${isInactive ? 'opacity-50' : ''}"><div><p class="font-bold">${escapeHTML(p.name)}</p><p class="text-sm text-gray-600">Venda: R$${(p.price || 0).toFixed(2)} | Custo: R$${(p.cost || 0).toFixed(2)} / ${escapeHTML(p.unit)}</p></div><div class="flex items-center">${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}">${isInactive ? '🚫' : '👁️'}</button>` : ''}${p.category === 'tamanho' ? `<button class="recipe-btn p-1 text-green-500" data-id="${p.id}">⚙️</button>` : ''}<button class="edit-produto-btn p-1 text-blue-500" data-id="${p.id}">✏️</button><button class="delete-produto-btn p-1 text-red-500" data-id="${p.id}">🗑️</button></div></div>`;
             });
             container.appendChild(grid);
         }
@@ -863,30 +875,30 @@ function carregarVendasAdmin(startDate, endDate) {
         const totalVendasSpan = document.getElementById('total-vendas');
 
         if (!tableBody || !totalPorTamanhoContainer || !totalVendasSpan) {
-            return; 
+            return;
         }
 
-        if (initialVendasLoadComplete && snapshot.docChanges().some(change => change.type === 'added')) { 
-            playNotificationSound(); 
-            showToast("Novo Pedido Recebido!"); 
+        if (initialVendasLoadComplete && snapshot.docChanges().some(change => change.type === 'added')) {
+            playNotificationSound();
+            showToast("Novo Pedido Recebido!");
             const tabVendas = document.getElementById('tab-vendas');
             if (tabVendas) tabVendas.click();
         }
-        
-        tableBody.innerHTML = ''; 
+
+        tableBody.innerHTML = '';
         let totalVendas = 0;
         const totaisPorTamanho = {};
 
-        if (snapshot.empty) { 
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-500">Nenhuma venda encontrada.</td></tr>'; 
-            totalVendasSpan.innerText = 'R$0,00'; 
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-gray-500">Nenhuma venda encontrada.</td></tr>';
+            totalVendasSpan.innerText = 'R$0,00';
             totalPorTamanhoContainer.innerHTML = '';
         } else {
             snapshot.docs.forEach(docSnap => {
                 const venda = { id: docSnap.id, ...docSnap.data() }; const isCombo = venda.pedidoCombo && !venda.tamanho; const { custoTotal, lucro } = isCombo ? { custoTotal: 0, lucro: 0 } : calcularCustoPedido(venda);
-                const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.')); 
-                if (!isNaN(valorNumerico)) { 
-                    totalVendas += valorNumerico; 
+                const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+                if (!isNaN(valorNumerico)) {
+                    totalVendas += valorNumerico;
                     if (venda.tamanho && !venda.pedidoCombo) {
                         if (!totaisPorTamanho[venda.tamanho]) { totaisPorTamanho[venda.tamanho] = { count: 0, total: 0 }; }
                         totaisPorTamanho[venda.tamanho].count += (venda.quantidade || 1);
@@ -894,24 +906,24 @@ function carregarVendasAdmin(startDate, endDate) {
                     }
                 }
                 const data = venda.timestamp ? new Date(venda.timestamp.seconds * 1000).toLocaleString('pt-BR') : 'N/A';
-                const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${venda.pedidoCombo}<br><small class="text-gray-500">${venda.observacoes}</small>` : `${venda.quantidade}x ${venda.tamanho}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${a.name} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${venda.observacoes}</small>`;
-                const financeiroHTML = isCombo ? `Venda: ${venda.total}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>` : `Venda: ${venda.total}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
+                const pedidoHTML = isCombo ? `<strong>Combo:</strong> ${escapeHTML(venda.pedidoCombo)}<br><small class="text-gray-500">${escapeHTML(venda.observacoes)}</small>` : `${venda.quantidade}x ${escapeHTML(venda.tamanho)}<br><small class="text-gray-500">${(venda.acompanhamentos || []).map(a => `${escapeHTML(a.name)} (x${a.quantity})`).join(', ')}</small><br><small class="text-blue-500 font-semibold">Obs: ${escapeHTML(venda.observacoes)}</small>`;
+                const financeiroHTML = isCombo ? `Venda: ${escapeHTML(venda.total)}<br><small class="text-gray-500">Custo/Lucro não aplicável</small>` : `Venda: ${escapeHTML(venda.total)}<br><small class="text-red-500">Custo: R$${custoTotal.toFixed(2)}</small><br><strong class="text-green-600">Lucro: R$${lucro.toFixed(2)}</strong>`;
                 const paymentIcon = venda.paymentMethod === 'PIX' ? '📱' : venda.paymentMethod === 'Cartão' ? '💳' : '💵';
-                const paymentHTML = `<span class="font-semibold">${venda.paymentMethod || 'N/A'} ${paymentIcon}</span>`;
+                const paymentHTML = `<span class="font-semibold">${escapeHTML(venda.paymentMethod || 'N/A')} ${paymentIcon}</span>`;
 
                 tableBody.innerHTML += `<tr class="border-b-0">
-                    <td class="p-3 text-sm font-mono">${venda.orderId || 'N/A'}</td>
+                    <td class="p-3 text-sm font-mono">${escapeHTML(venda.orderId || 'N/A')}</td>
                     <td class="p-3 text-sm">${data}</td>
-                    <td class="p-3 text-sm font-semibold">${venda.nomeCliente || 'N/A'}<br><small class="text-gray-500 font-normal">${venda.telefoneCliente || ''}</small></td>
+                    <td class="p-3 text-sm font-semibold">${escapeHTML(venda.nomeCliente || 'N/A')}<br><small class="text-gray-500 font-normal">${escapeHTML(venda.telefoneCliente || '')}</small></td>
                     <td class="p-3 text-sm">${pedidoHTML}</td>
                     <td class="p-3 text-sm">${paymentHTML}</td>
                     <td class="p-3 font-medium">${financeiroHTML}</td>
-                    <td class="p-3 font-semibold ${venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600'} capitalize">${venda.status}</td>
+                    <td class="p-3 font-semibold ${venda.status === 'pendente' ? 'text-yellow-600' : 'text-green-600'} capitalize">${escapeHTML(venda.status)}</td>
                     <td class="p-3">${venda.status === 'pendente' ? `<button class="confirm-venda-btn bg-green-500 text-white px-2 py-1 rounded text-xs" data-id="${venda.id}">✔️</button>` : ''}<button class="delete-venda-btn bg-red-500 text-white px-2 py-1 rounded text-xs ml-1" data-id="${venda.id}">🗑️</button></td>
                 </tr>`;
-            }); 
+            });
             totalVendasSpan.innerText = `R$${totalVendas.toFixed(2).replace('.', ',')}`;
-            
+
             let totaisHTML = '<h4 class="text-xl font-bold text-gray-800 mb-2">Resumo por Tamanho</h4>';
             if (Object.keys(totaisPorTamanho).length > 0) {
                 totaisHTML += '<div class="space-y-1">';
@@ -945,8 +957,8 @@ function deletarVenda(id) {
 
 async function salvarConfiguracoes() {
     const dias = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
-    const settings = { 
-        mensagemFechado: document.getElementById('mensagem-fechado').value, 
+    const settings = {
+        mensagemFechado: document.getElementById('mensagem-fechado').value,
         whatsappNumber: document.getElementById('whatsapp-number').value,
         pixKey: document.getElementById('pix-key').value,
         pixRecipientName: document.getElementById('pix-recipient-name').value,
@@ -961,7 +973,7 @@ async function carregarConfiguracoesAdmin() {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
         const settings = docSnap.data();
-        document.getElementById('whatsapp-number').value = settings.whatsappNumber || ''; 
+        document.getElementById('whatsapp-number').value = settings.whatsappNumber || '';
         document.getElementById('mensagem-fechado').value = settings.mensagemFechado || '';
         document.getElementById('pix-key').value = settings.pixKey || '';
         document.getElementById('pix-recipient-name').value = settings.pixRecipientName || '';
@@ -987,7 +999,7 @@ function carregarFluxoCaixa(startDate, endDate) {
         const totalEntradasEl = document.getElementById('total-entradas');
         const totalSaidasEl = document.getElementById('total-saidas');
         const saldoAtualEl = document.getElementById('saldo-atual');
-        
+
         if (!tableBody || !totalEntradasEl || !totalSaidasEl || !saldoAtualEl) {
             return;
         }
@@ -997,10 +1009,10 @@ function carregarFluxoCaixa(startDate, endDate) {
         snapshot.docs.forEach(docSnap => {
             const t = { id: docSnap.id, ...docSnap.data() }; const valor = t.valor || 0;
             if (t.tipo === 'entrada') totalEntradas += valor; else totalSaidas += valor;
-            tableBody.innerHTML += `<tr class="border-b-0"><td class="p-3 text-sm">${t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString('pt-BR') : 'N/A'}</td><td class="p-3">${t.descricao}</td><td class="p-3 font-semibold ${t.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'} capitalize">${t.tipo}</td><td class="p-3 font-medium">R$${valor.toFixed(2).replace('.', ',')}</td><td class="p-3"><button class="delete-transacao-btn bg-red-500 text-white px-2 py-1 rounded text-xs" data-id="${t.id}">🗑️</button></td></tr>`;
+            tableBody.innerHTML += `<tr class="border-b-0"><td class="p-3 text-sm">${t.timestamp ? new Date(t.timestamp.seconds * 1000).toLocaleDateString('pt-BR') : 'N/A'}</td><td class="p-3">${escapeHTML(t.descricao)}</td><td class="p-3 font-semibold ${t.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'} capitalize">${escapeHTML(t.tipo)}</td><td class="p-3 font-medium">R$${valor.toFixed(2).replace('.', ',')}</td><td class="p-3"><button class="delete-transacao-btn bg-red-500 text-white px-2 py-1 rounded text-xs" data-id="${t.id}">🗑️</button></td></tr>`;
         });
-        totalEntradasEl.innerText = `R$${totalEntradas.toFixed(2).replace('.', ',')}`; 
-        totalSaidasEl.innerText = `R$${totalSaidas.toFixed(2).replace('.', ',')}`; 
+        totalEntradasEl.innerText = `R$${totalEntradas.toFixed(2).replace('.', ',')}`;
+        totalSaidasEl.innerText = `R$${totalSaidas.toFixed(2).replace('.', ',')}`;
         saldoAtualEl.innerText = `R$${(totalEntradas - totalSaidas).toFixed(2).replace('.', ',')}`;
         document.querySelectorAll('.delete-transacao-btn').forEach(btn => btn.addEventListener('click', e => deletarTransacao(e.currentTarget.dataset.id)));
     });
@@ -1028,7 +1040,7 @@ function checkStoreOpen() {
             btn.classList.toggle('bg-gray-400', !isStoreOpen);
             btn.classList.toggle('cursor-not-allowed', !isStoreOpen);
             btn.classList.toggle('bg-gradient-to-r', isStoreOpen);
-            if(avisoLojaFechada) avisoLojaFechada.classList.toggle('hidden', isStoreOpen);
+            if (avisoLojaFechada) avisoLojaFechada.classList.toggle('hidden', isStoreOpen);
             if (!isStoreOpen && msgLojaFechada) { msgLojaFechada.innerText = storeSettings.mensagemFechado || "Estamos fechados no momento."; }
         }
     });
@@ -1077,12 +1089,12 @@ function generatePixPayload(key, name, city, amountStr, txid) {
     const amount = parseFloat(amountStr.replace("R$", "").replace(",", ".")).toFixed(2);
     const normalizedName = normalizeText(name).toUpperCase();
     const normalizedCity = normalizeText(city).toUpperCase();
-    
+
     // O txid para um PIX estático com valor definido deve ser '***'
     const cleanTxid = '***';
 
     const merchantAccountInfo = formatField('00', 'br.gov.bcb.pix') + formatField('01', key);
-    
+
     let payload = [
         formatField('00', '01'),
         formatField('26', merchantAccountInfo),
@@ -1139,7 +1151,7 @@ function showPixModal(valor, orderId) {
                 document.execCommand('copy');
                 e.currentTarget.innerHTML = 'Copiado!';
                 setTimeout(() => { e.currentTarget.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 7a.5.5 0 0 1 .5-.5h15a.5.5 0 0 1 0 1H-0.5A.5.5 0 0 1-1 7z"/></svg>'; }, 2000);
-            } catch(err) {
+            } catch (err) {
                 console.error('Falha ao copiar:', err);
             }
         });
@@ -1154,7 +1166,8 @@ onSnapshot(doc(db, "configuracoes", "horarios"), (doc) => {
 
 onSnapshot(collection(db, "produtos"), (snapshot) => {
     produtos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderMenu(); calcularValor();
-}, (error) => { console.error("Erro ao carregar produtos:", error); 
+}, (error) => {
+    console.error("Erro ao carregar produtos:", error);
     const menuContainerEl = document.getElementById('menu-container');
     if (menuContainerEl) {
         menuContainerEl.innerHTML = '<p class="text-red-500 text-center">Não foi possível carregar o cardápio.</p>';
@@ -1163,9 +1176,10 @@ onSnapshot(collection(db, "produtos"), (snapshot) => {
 
 onSnapshot(collection(db, "combos"), (snapshot) => {
     combos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderCombosMenu();
-}, (error) => { console.error("Erro ao carregar combos:", error); 
+}, (error) => {
+    console.error("Erro ao carregar combos:", error);
     const combosSectionEl = document.getElementById('combos-section');
-    if(combosSectionEl) {
+    if (combosSectionEl) {
         combosSectionEl.classList.add('hidden');
     }
 });
