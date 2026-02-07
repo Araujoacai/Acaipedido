@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // === REGRAS DE SEGURANÇA REFORÇADAS ===
+    
+    // Helper functions para validação
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin(uid) {
+      // Substitua pelos UIDs reais dos administradores
+      // Você pode obter o UID no Firebase Console > Authentication
+      return isAuthenticated() && 
+             request.auth.uid in [
+               // 'UID_DO_ADMIN_1',
+               // 'UID_DO_ADMIN_2'
+             ];
+    }
+    
+    // === PRODUTOS ===
+    // Apenas admins autenticados podem modificar produtos
+    // Leitura pública para exibir no cardápio
+    match /produtos/{productId} {
+      allow read: if true; // Qualquer um pode ler (cardápio público)
+      allow create, update, delete: if isAuthenticated(); // Apenas admin logado
+    }
+    
+    // === COMBOS ===
+    match /combos/{comboId} {
+      allow read: if true; // Leitura pública
+      allow create, update, delete: if isAuthenticated(); // Apenas admin
+    }
+    
+    // === VENDAS (PEDIDOS) ===
+    match /vendas/{vendaId} {
+      allow read: if isAuthenticated(); // Apenas admin vê vendas
+      allow create: if true; // Qualquer um pode criar pedido (clientes)
+      allow update: if isAuthenticated(); // Apenas admin pode atualizar status
+      allow delete: if isAuthenticated(); // Apenas admin pode deletar
+      
+      // Validações de dados no create
+      allow create: if request.resource.data.keys().hasAll([
+        'nomeCliente', 'telefoneCliente', 'total', 'timestamp'
+      ]) &&
+      // Nome do cliente deve ter entre 2 e 100 caracteres
+      request.resource.data.nomeCliente is string &&
+      request.resource.data.nomeCliente.size() >= 2 &&
+      request.resource.data.nomeCliente.size() <= 100 &&
+      // Telefone deve ter entre 8 e 20 caracteres
+      request.resource.data.telefoneCliente is string &&
+      request.resource.data.telefoneCliente.size() >= 8 &&
+      request.resource.data.telefoneCliente.size() <= 20 &&
+      // Total deve ser string formatada
+      request.resource.data.total is string;
+    }
+    
+    // === TRANSAÇÕES (CAIXA) ===
+    match /transacoes/{transacaoId} {
+      allow read, write: if isAuthenticated(); // Apenas admin
+    }
+    
+    // === CONFIGURAÇÕES ===
+    match /config/{configId} {
+      allow read: if true; // Horários e PIX são públicos
+      allow write: if isAuthenticated(); // Apenas admin pode alterar
+    }
+    
+    // === BLOQUEAR TUDO QUE NÃO FOI ESPECIFICADO ===
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

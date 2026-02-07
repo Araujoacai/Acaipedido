@@ -90,11 +90,206 @@ onAuthStateChanged(auth, user => {
     }
 });
 
+// Sistema de Rate Limiting para login
+const loginAttempts = {
+    count: 0,
+    lastAttempt: null,
+    blockedUntil: null
+};
+
+// Verificar se está bloqueado por tentativas excessivas
+function isLoginBlocked() {
+    if (!loginAttempts.blockedUntil) return false;
+    if (Date.now() < loginAttempts.blockedUntil) {
+        const remainingMinutes = Math.ceil((loginAttempts.blockedUntil - Date.now()) / 60000);
+        return remainingMinutes;
+    }
+    // Bloqueio expirado, resetar
+    loginAttempts.count = 0;
+    loginAttempts.blockedUntil = null;
+    return false;
+}
+
+// Validar força da senha (requisitos mínimos)
+function validatePasswordStrength(password) {
+    const requirements = {
+        minLength: password.length >= 8,
+        hasUpperCase: /[A-Z]/.test(password),
+        hasLowerCase: /[a-z]/.test(password),
+        hasNumber: /\d/.test(password)
+    };
+
+    const isStrong = Object.values(requirements).every(req => req);
+
+    return { isStrong, requirements };
+}
+
+// Mostrar requisitos de senha
+function showPasswordRequirements() {
+    return `
+    <div class="text-left mt-2 text-xs text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
+      <p class="font-semibold mb-1 text-blue-800">A senha deve conter:</p>
+      <ul class="list-disc list-inside space-y-0.5">
+        <li>Mínimo 8 caracteres</li>
+        <li>Pelo menos 1 letra maiúscula</li>
+        <li>Pelo menos 1 letra minúscula</li>
+        <li>Pelo menos 1 número</li>
+      </ul>
+    </div>
+  `;
+}
+
 adminLoginBtn.addEventListener('click', () => {
-    const loginFormHTML = `<h3 class="text-xl font-bold mb-4">Login Admin</h3><input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded mb-2 bg-gray-100 border-gray-300 text-gray-800"><input type="password" id="password" placeholder="Senha" class="w-full p-2 border rounded mb-4 bg-gray-100 border-gray-300 text-gray-800"><button id="login-submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg">Entrar</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button>`;
+    // Verificar se está bloqueado
+    const blockedMinutes = isLoginBlocked();
+    if (blockedMinutes) {
+        showModal(`
+      <div class="text-center">
+        <div class="text-red-500 text-5xl mb-4">⛔</div>
+        <h3 class="text-xl font-bold mb-2">Acesso Temporariamente Bloqueado</h3>
+        <p class="text-gray-600 mb-4">Muitas tentativas de login falhadas.</p>
+        <p class="text-red-600 font-semibold">Tente novamente em ${blockedMinutes} minuto(s).</p>
+        <button onclick="window.closeModal()" class="mt-4 bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition">OK</button>
+      </div>
+    `);
+        return;
+    }
+
+    const loginFormHTML = `
+    <h3 class="text-2xl font-bold mb-6 text-purple-700">🔐 Login Admin</h3>
+    <div class="text-left space-y-4">
+      <div>
+        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+        <input type="email" id="email" placeholder="admin@acaiaraujo.com" 
+          class="w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition outline-none">
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Senha</label>
+        <div class="relative">
+          <input type="password" id="password" placeholder="••••••••" 
+            class="w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition outline-none pr-12">
+          <button type="button" id="toggle-password" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+            <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+              <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+            </svg>
+          </button>
+        </div>
+        <div id="password-strength" class="mt-2 hidden"></div>
+      </div>
+      <div class="flex items-center text-xs text-gray-500 bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+        <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+        </svg>
+        <span>Tentativas restantes: <strong>${5 - loginAttempts.count}</strong></span>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button id="login-submit" class="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all">
+        Entrar
+      </button>
+      <button onclick="window.closeModal()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-6 py-3 rounded-xl transition">
+        Cancelar
+      </button>
+    </div>
+  `;
+
     showModal(loginFormHTML, () => {
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('toggle-password');
+        const eyeIcon = document.getElementById('eye-icon');
+
+        // Toggle mostrar/ocultar senha
+        if (togglePasswordBtn) {
+            togglePasswordBtn.addEventListener('click', () => {
+                const type = passwordInput.type === 'password' ? 'text' : 'password';
+                passwordInput.type = type;
+
+                // Trocar ícone
+                eyeIcon.innerHTML = type === 'password'
+                    ? '<path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>'
+                    : '<path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/><path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/><path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>';
+            });
+        }
+
+        // Botão de login
         document.getElementById('login-submit').addEventListener('click', async () => {
-            try { await signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value); closeModal(); } catch (error) { console.error("Erro de login:", error); alert("Email ou senha inválidos."); }
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showModal('⚠️ Por favor, preencha email e senha.');
+                return;
+            }
+
+            // Validar formato de email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showModal('⚠️ Email inválido. Por favor, insira um email válido.');
+                return;
+            }
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+
+                // Sucesso: resetar tentativas
+                loginAttempts.count = 0;
+                loginAttempts.lastAttempt = null;
+                loginAttempts.blockedUntil = null;
+
+                closeModal();
+            } catch (error) {
+                console.error("Erro de login:", error);
+
+                // Incrementar tentativas
+                loginAttempts.count++;
+                loginAttempts.lastAttempt = Date.now();
+
+                // Bloquear após 5 tentativas (5 minutos)
+                if (loginAttempts.count >= 5) {
+                    loginAttempts.blockedUntil = Date.now() + (5 * 60 * 1000); // 5 minutos
+                    closeModal();
+                    showModal(`
+            <div class="text-center">
+              <div class="text-red-500 text-5xl mb-4">⛔</div>
+              <h3 class="text-xl font-bold mb-2">Conta Bloqueada Temporariamente</h3>
+              <p class="text-gray-600 mb-4">Você excedeu o número máximo de tentativas de login.</p>
+              <p class="text-red-600 font-semibold">Tente novamente em 5 minutos.</p>
+              <button onclick="window.closeModal()" class="mt-4 bg-gray-300 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-400 transition">OK</button>
+            </div>
+          `);
+                    return;
+                }
+
+                // Mensagem de erro amigável
+                let errorMessage = "Email ou senha inválidos.";
+                if (error.code === 'auth/user-not-found') {
+                    errorMessage = "Usuário não encontrado. Verifique o email.";
+                } else if (error.code === 'auth/wrong-password') {
+                    errorMessage = "Senha incorreta. Tente novamente.";
+                } else if (error.code === 'auth/too-many-requests') {
+                    errorMessage = "Muitas tentativas. Aguarde alguns minutos.";
+                }
+
+                closeModal();
+                showModal(`
+          <div class="text-center">
+            <div class="text-yellow-500 text-5xl mb-4">⚠️</div>
+            <h3 class="text-xl font-bold mb-2">Falha no Login</h3>
+            <p class="text-gray-700 mb-4">${errorMessage}</p>
+            <p class="text-sm text-gray-500">Tentativas restantes: <strong>${5 - loginAttempts.count}</strong></p>
+            <button onclick="window.closeModal()" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition">Tentar Novamente</button>
+          </div>
+        `);
+            }
+        });
+
+        // Enter para submeter
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('login-submit').click();
+            }
         });
     });
 });
@@ -255,10 +450,34 @@ async function enviarPedido() {
     if (!tamanhoEl) { showModal("Por favor, selecione o tamanho do copo!"); return; }
     const quantidade = document.getElementById("quantidade").value;
     if (quantidade < 1) { showModal("Por favor, informe a quantidade!"); return; }
+
+    // Validação de nome do cliente (2-100 caracteres, apenas letras e espaços)
     const nomeCliente = document.getElementById('nome-cliente').value.trim();
-    if (!nomeCliente) { showModal("Por favor, digite seu nome!"); return; }
+    if (!nomeCliente) {
+        showModal("Por favor, digite seu nome!");
+        return;
+    }
+    if (nomeCliente.length < 2 || nomeCliente.length > 100) {
+        showModal("Nome deve ter entre 2 e 100 caracteres.");
+        return;
+    }
+    if (!/^[a-záàâãéèêíïóôõöúçñA-ZÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\s]+$/.test(nomeCliente)) {
+        showModal("Nome deve conter apenas letras.");
+        return;
+    }
+
+    // Validação de telefone (formato brasileiro)
     const telefoneCliente = document.getElementById('telefone-cliente').value.trim();
-    if (!telefoneCliente) { showModal("Por favor, digite seu telefone!"); return; }
+    if (!telefoneCliente) {
+        showModal("Por favor, digite seu telefone!");
+        return;
+    }
+    // Remover caracteres não numéricos
+    const telefoneLimpo = telefoneCliente.replace(/\D/g, '');
+    if (telefoneLimpo.length < 10 || telefoneLimpo.length > 11) {
+        showModal("Telefone inválido. Use o formato: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX");
+        return;
+    }
 
     const acompanhamentosSelecionados = [];
     document.querySelectorAll('.acompanhamento-check:checked').forEach(check => {
@@ -410,6 +629,7 @@ function renderAdminPanel() {
             <button id="tab-combos" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Gerenciar Combos</button>
             <button id="tab-vendas" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Relatório de Vendas</button>
             <button id="tab-caixa" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Fluxo de Caixa</button>
+            <button id="tab-notificacoes" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">🔔 Notificações</button>
             <button id="tab-config" class="tab-btn py-2 px-4 font-semibold border-b-2 border-transparent flex-shrink-0">Configurações</button>
         </div>
         <div id="content-dashboard"></div>
@@ -417,6 +637,7 @@ function renderAdminPanel() {
         <div id="content-combos" class="hidden"></div>
         <div id="content-vendas" class="hidden"></div>
         <div id="content-caixa" class="hidden"></div>
+        <div id="content-notificacoes" class="hidden"></div>
         <div id="content-config" class="hidden"></div>
     `;
 
@@ -425,6 +646,7 @@ function renderAdminPanel() {
     renderCombosAdmin();
     renderVendasAdmin();
     renderCaixaAdmin();
+    renderNotificacoesAdmin();
     renderConfigAdmin();
 
     const tabs = {
@@ -433,6 +655,7 @@ function renderAdminPanel() {
         combos: document.getElementById('tab-combos'),
         vendas: document.getElementById('tab-vendas'),
         caixa: document.getElementById('tab-caixa'),
+        notificacoes: document.getElementById('tab-notificacoes'),
         config: document.getElementById('tab-config')
     };
     const contents = {
@@ -441,6 +664,7 @@ function renderAdminPanel() {
         combos: document.getElementById('content-combos'),
         vendas: document.getElementById('content-vendas'),
         caixa: document.getElementById('content-caixa'),
+        notificacoes: document.getElementById('content-notificacoes'),
         config: document.getElementById('content-config')
     };
 
@@ -771,6 +995,165 @@ function renderConfigAdmin() {
     carregarConfiguracoesAdmin();
 }
 
+function renderNotificacoesAdmin() {
+    const settings = typeof notificationManager !== 'undefined' ? notificationManager.getSettings() : {
+        sound: false,
+        vibration: false,
+        notifications: false,
+        permission: 'default'
+    };
+
+    const permissionStatus = {
+        'granted': { text: '✅ Permitidas', class: 'bg-green-100 text-green-800' },
+        'denied': { text: '⛔ Bloqueadas', class: 'bg-red-100 text-red-800' },
+        'default': { text: '⏸️ Não solicitadas', class: 'bg-yellow-100 text-yellow-800' }
+    };
+
+    const currentPermission = permissionStatus[settings.permission] || permissionStatus['default'];
+
+    document.getElementById('content-notificacoes').innerHTML = `
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h3 class="text-2xl font-semibold mb-2 text-purple-700">🔔 Configurações de Notificações</h3>
+            <p class="text-gray-600 mb-6">Configure como você deseja ser alertado sobre novos pedidos.</p>
+            
+            <!-- Status das Permissões -->
+            <div class="mb-8 p-5 border-2 border-purple-200 rounded-xl bg-purple-50">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800">Status das Permissões</h4>
+                        <p class="text-sm text-gray-600">Permissão do navegador para notificações push</p>
+                    </div>
+                    <span class="px-4 py-2 rounded-full font-bold ${currentPermission.class}">${currentPermission.text}</span>
+                </div>
+                
+                ${settings.permission !== 'granted' ? `
+                    <button id="request-permission-btn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5.002 5.002 0 0 1 13 6c0 .88.32 4.2 1.22 6z"/>
+                        </svg>
+                        <span>Ativar Notificações Push</span>
+                    </button>
+                ` : `
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                        <p class="text-green-800 font-medium">✅ Notificações ativadas! Você receberá alertas de novos pedidos.</p>
+                    </div>
+                `}
+            </div>
+
+            <!-- Configurações de Som -->
+            <div class="mb-6 p-5 border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            🔊 Som de Alerta
+                        </h4>
+                        <p class="text-sm text-gray-600">Tocar som ao receber novo pedido</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-sound" class="sr-only peer" ${settings.sound ? 'checked' : ''}>
+                        <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+                <button id="test-sound-btn" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors text-sm">
+                    🎵 Testar Som
+                </button>
+            </div>
+
+            <!-- Configurações de Vibração -->
+            <div class="mb-6 p-5 border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                            📳 Vibração (Mobile)
+                        </h4>
+                        <p class="text-sm text-gray-600">Vibrar dispositivo ao receber pedido</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-vibration" class="sr-only peer" ${settings.vibration ? 'checked' : ''}>
+                        <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Teste de Notificação Completa -->
+            <div class="p-5 border-2 border-purple-200 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50">
+                <h4 class="text-lg font-semibold text-gray-800 mb-2">🧪 Testar Notificação Completa</h4>
+                <p class="text-sm text-gray-600 mb-4">Enviar uma notificação de teste com som e vibração</p>
+                <button id="test-notification-btn" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-md">
+                    🚀 Enviar Notificação de Teste
+                </button>
+            </div>
+
+            <!-- Instruções -->
+            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <h5 class="font-semibold text-blue-900 mb-2">💡 Como Funciona</h5>
+                <ul class="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Quando logado: Som + Toast visual no painel</li>
+                    <li>Com aba fechada: Notificação push no navegador</li>
+                    <li>Com site fechado: Notificação em segundo plano (requer permissão)</li>
+                    <li>No celular: Som + vibração + notificação visual</li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+    // Event Listeners
+    const requestPermissionBtn = document.getElementById('request-permission-btn');
+    if (requestPermissionBtn) {
+        requestPermissionBtn.addEventListener('click', async () => {
+            if (typeof notificationManager !== 'undefined') {
+                const granted = await notificationManager.requestPermission();
+                if (granted) {
+                    renderNotificacoesAdmin(); // Re-render para atualizar UI
+                    showModal('✅ Notificações ativadas com sucesso!');
+                } else {
+                    showModal('⚠️ Permissão negada. Verifique as configurações do navegador.');
+                }
+            }
+        });
+    }
+
+    const toggleSound = document.getElementById('toggle-sound');
+    if (toggleSound) {
+        toggleSound.addEventListener('change', () => {
+            if (typeof notificationManager !== 'undefined') {
+                const enabled = notificationManager.toggleSound();
+                showToast(enabled ? '🔊 Som ativado' : '🔇 Som desativado');
+            }
+        });
+    }
+
+    const toggleVibration = document.getElementById('toggle-vibration');
+    if (toggleVibration) {
+        toggleVibration.addEventListener('change', () => {
+            if (typeof notificationManager !== 'undefined') {
+                const enabled = notificationManager.toggleVibration();
+                showToast(enabled ? '📳 Vibração ativada' : '📴 Vibração desativada');
+            }
+        });
+    }
+
+    const testSoundBtn = document.getElementById('test-sound-btn');
+    if (testSoundBtn) {
+        testSoundBtn.addEventListener('click', () => {
+            if (typeof notificationManager !== 'undefined') {
+                notificationManager.playNotificationSound();
+                showToast('🎵 Reproduzindo som de teste');
+            }
+        });
+    }
+
+    const testNotificationBtn = document.getElementById('test-notification-btn');
+    if (testNotificationBtn) {
+        testNotificationBtn.addEventListener('click', async () => {
+            if (typeof notificationManager !== 'undefined') {
+                await notificationManager.testNotification();
+                showToast('🚀 Notificação de teste enviada!');
+            }
+        });
+    }
+}
+
 function renderCaixaAdmin() {
     document.getElementById('content-caixa').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Fluxo de Caixa</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-center"><div class="bg-green-100 p-4 rounded-lg"><h4 class="font-semibold text-green-800">Total de Entradas</h4><p id="total-entradas" class="text-2xl font-bold text-green-600">R$0,00</p></div><div class="bg-red-100 p-4 rounded-lg"><h4 class="font-semibold text-red-800">Total de Saídas</h4><p id="total-saidas" class="text-2xl font-bold text-red-600">R$0,00</p></div><div class="bg-blue-100 p-4 rounded-lg"><h4 class="font-semibold text-blue-800">Saldo Atual</h4><p id="saldo-atual" class="text-2xl font-bold text-blue-600">R$0,00</p></div></div><div class="mb-6 p-4 border border-gray-200 rounded-lg"><h4 class="text-xl font-medium mb-3">Adicionar Lançamento</h4><div class="grid grid-cols-1 md:grid-cols-4 gap-4"><input type="hidden" id="transacao-id"><input type="text" id="transacao-descricao" placeholder="Descrição" class="p-2 border rounded col-span-2 border-gray-300"><input type="number" id="transacao-valor" placeholder="Valor" step="0.01" class="p-2 border rounded border-gray-300"><select id="transacao-tipo" class="p-2 border rounded border-gray-300"><option value="entrada">Entrada</option><option value="saida">Saída</option></select><button id="salvar-transacao-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-4 md:col-span-1">Salvar</button></div></div><div class="flex flex-wrap gap-4 items-center mb-4 p-4 border border-gray-200 rounded-lg"><label for="start-date-caixa">De:</label><input type="date" id="start-date-caixa" class="p-2 border rounded border-gray-300"><label for="end-date-caixa">Até:</label><input type="date" id="end-date-caixa" class="p-2 border rounded border-gray-300"><button id="gerar-relatorio-caixa-btn" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600">Filtrar</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-100"><tr><th class="p-3">Data</th><th class="p-3">Descrição</th><th class="p-3">Tipo</th><th class="p-3">Valor</th><th class="p-3">Ações</th></tr></thead><tbody id="caixa-table-body" class="divide-y divide-gray-200"></tbody></table></div></div>`;
     document.getElementById('salvar-transacao-btn').addEventListener('click', salvarTransacao);
@@ -845,13 +1228,19 @@ function showToast(message) {
 }
 
 function playNotificationSound() {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
-    oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
-    oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 1);
+    // Usar o sistema de notificação melhorado
+    if (typeof notificationManager !== 'undefined') {
+        notificationManager.playNotificationSound();
+    } else {
+        // Fallback caso o notification manager não esteja carregado
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+        oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+        oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 1);
+    }
 }
 
 function calcularCustoPedido(venda) {
@@ -892,6 +1281,21 @@ function carregarVendasAdmin(startDate, endDate) {
         if (initialVendasLoadComplete && snapshot.docChanges().some(change => change.type === 'added')) {
             playNotificationSound();
             showToast("Novo Pedido Recebido!");
+
+            // Enviar notificação push se disponível
+            if (typeof notificationManager !== 'undefined') {
+                // Pegar o primeiro pedido novo
+                const novoPedido = snapshot.docChanges().find(change => change.type === 'added');
+                if (novoPedido) {
+                    const venda = novoPedido.doc.data();
+                    notificationManager.notifyNewOrder({
+                        orderId: venda.orderId || 'N/A',
+                        nomeCliente: venda.nomeCliente || 'Cliente',
+                        total: venda.total || 'R$0,00'
+                    });
+                }
+            }
+
             const tabVendas = document.getElementById('tab-vendas');
             if (tabVendas) tabVendas.click();
         }
