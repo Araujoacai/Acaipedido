@@ -305,7 +305,7 @@ function renderMenu() {
 
     produtosVisiveis.forEach(p => {
         const pId = p.name.replace(/[^a-zA-Z0-9]/g, '');
-        if (p.category === 'tamanho' && containers.tamanho) {
+        if (hasCategory(p, 'tamanho') && containers.tamanho) {
             precosBase[p.name] = p.price;
             containers.tamanho.innerHTML += `
                 <div>
@@ -986,7 +986,51 @@ function carregarDashboardData() {
 }
 
 function renderProdutosAdmin() {
-    document.getElementById('content-produtos').innerHTML = `<div class="bg-white p-6 rounded-2xl shadow-lg mb-8"><h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Produto</h3><div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6 p-4 border border-gray-200 rounded-lg"><input type="hidden" id="produto-id"><input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded border-gray-300"><input type="number" id="produto-preco" placeholder="Preço Venda" step="0.01" class="p-2 border rounded border-gray-300"><input type="number" id="produto-custo" placeholder="Preço Custo" step="0.01" class="p-2 border rounded border-gray-300"><input type="text" id="produto-unidade" placeholder="Unidade (g, ml, un)" class="p-2 border rounded border-gray-300"><input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded border-gray-300"><select id="produto-categoria" class="p-2 border rounded border-gray-300"><option value="tamanho">Tamanho</option><option value="fruta">Fruta</option><option value="creme">Creme</option><option value="outro">Outro</option><option value="insumo">Insumo</option></select><button id="salvar-produto-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-full">Salvar</button></div><div id="lista-produtos-admin"></div></div>`;
+    document.getElementById('content-produtos').innerHTML = `
+    <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+        <h3 class="text-2xl font-semibold mb-4 text-purple-700">Adicionar / Editar Produto</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 border border-gray-200 rounded-lg">
+            <input type="hidden" id="produto-id">
+            
+            <!-- Linha 1 -->
+            <input type="text" id="produto-nome" placeholder="Nome" class="p-2 border rounded border-gray-300">
+            <input type="number" id="produto-preco" placeholder="Preço Venda" step="0.01" class="p-2 border rounded border-gray-300">
+            <input type="number" id="produto-custo" placeholder="Preço Custo" step="0.01" class="p-2 border rounded border-gray-300">
+            
+            <!-- Linha 2 -->
+            <input type="text" id="produto-unidade" placeholder="Unidade (g, ml, un)" class="p-2 border rounded border-gray-300">
+            <input type="text" id="produto-icone" placeholder="URL do Ícone" class="p-2 border rounded border-gray-300 col-span-2">
+            
+            <!-- Categorias com Checkboxes -->
+            <div class="col-span-full">
+                <label class="block font-semibold mb-2 text-gray-700">Categorias (selecione uma ou mais)</label>
+                <div id="produto-categorias" class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <label class="flex items-center p-2 border rounded cursor-pointer hover:bg-purple-50 transition">
+                        <input type="checkbox" value="tamanho" class="mr-2"> Tamanho
+                    </label>
+                    <label class="flex items-center p-2 border rounded cursor-pointer hover:bg-purple-50 transition">
+                        <input type="checkbox" value="fruta" class="mr-2"> Fruta
+                    </label>
+                    <label class="flex items-center p-2 border rounded cursor-pointer hover:bg-purple-50 transition">
+                        <input type="checkbox" value="creme" class="mr-2"> Creme
+                    </label>
+                    <label class="flex items-center p-2 border rounded cursor-pointer hover:bg-purple-50 transition">
+                        <input type="checkbox" value="outro" class="mr-2"> Outro
+                    </label>
+                    <label class="flex items-center p-2 border rounded cursor-pointer hover:bg-purple-50 transition">
+                        <input type="checkbox" value="insumo" class="mr-2"> Insumo
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">💡 Ex: Banana pode ser Fruta + Insumo</p>
+            </div>
+            
+            <button id="salvar-produto-btn" class="bg-green-500 text-white p-2 rounded hover:bg-green-600 col-span-full font-semibold">
+                💾 Salvar Produto
+            </button>
+        </div>
+        <div id="lista-produtos-admin"></div>
+    </div>
+    `;
     document.getElementById('salvar-produto-btn').addEventListener('click', salvarProduto);
     carregarProdutosAdmin();
 }
@@ -1334,13 +1378,132 @@ function renderCaixaAdmin() {
 
 async function salvarProduto() {
     const id = document.getElementById('produto-id').value;
-    const produto = { name: document.getElementById('produto-nome').value, price: parseFloat(document.getElementById('produto-preco').value) || 0, cost: parseFloat(document.getElementById('produto-custo').value) || 0, unit: document.getElementById('produto-unidade').value, iconUrl: document.getElementById('produto-icone').value, category: document.getElementById('produto-categoria').value, isActive: true };
-    if (!produto.name || !produto.unit) { showModal("Nome e Unidade são obrigatórios."); return; }
-    if (produto.category === 'tamanho') { produto.recipe = []; }
+
+    // Coletar categorias marcadas
+    const categoriesSelecionadas = Array.from(document.querySelectorAll('#produto-categorias input:checked'))
+        .map(cb => cb.value);
+
+    // Validar se pelo menos uma categoria foi selecionada
+    if (categoriesSelecionadas.length === 0) {
+        showModal("⚠️ Selecione pelo menos uma categoria para o produto.");
+        return;
+    }
+
+    const produto = {
+        name: document.getElementById('produto-nome').value,
+        price: parseFloat(document.getElementById('produto-preco').value) || 0,
+        cost: parseFloat(document.getElementById('produto-custo').value) || 0,
+        unit: document.getElementById('produto-unidade').value,
+        iconUrl: document.getElementById('produto-icone').value,
+        categories: categoriesSelecionadas,  // Array de categorias
+        isActive: true
+    };
+
+    if (!produto.name || !produto.unit) {
+        showModal("Nome e Unidade são obrigatórios.");
+        return;
+    }
+
+    // Se tem categoria "tamanho", inicializar receita vazia se não existir
+    if (categoriesSelecionadas.includes('tamanho')) {
+        produto.recipe = [];
+    }
+
     try {
-        if (id) { const existingProd = produtos.find(p => p.id === id); if (existingProd) { produto.recipe = existingProd.recipe || []; produto.isActive = existingProd.isActive; } await updateDoc(doc(db, "produtos", id), produto); } else { await addDoc(collection(db, "produtos"), produto); }
-        document.getElementById('produto-id').value = ''; document.getElementById('produto-nome').value = ''; document.getElementById('produto-preco').value = ''; document.getElementById('produto-custo').value = ''; document.getElementById('produto-unidade').value = ''; document.getElementById('produto-icone').value = '';
-    } catch (error) { console.error("Erro ao salvar produto:", error); showModal("Não foi possível salvar o produto."); }
+        if (id) {
+            // Edição: preservar recipe e isActive existentes
+            const existingProd = produtos.find(p => p.id === id);
+            if (existingProd) {
+                produto.recipe = existingProd.recipe || [];
+                produto.isActive = existingProd.isActive;
+            }
+            await updateDoc(doc(db, "produtos", id), produto);
+        } else {
+            // Novo produto
+            await addDoc(collection(db, "produtos"), produto);
+        }
+
+        // Limpar formulário
+        document.getElementById('produto-id').value = '';
+        document.getElementById('produto-nome').value = '';
+        document.getElementById('produto-preco').value = '';
+        document.getElementById('produto-custo').value = '';
+        document.getElementById('produto-unidade').value = '';
+        document.getElementById('produto-icone').value = '';
+
+        // Desmarcar todos os checkboxes
+        document.querySelectorAll('#produto-categorias input').forEach(cb => cb.checked = false);
+
+    } catch (error) {
+        console.error("Erro ao salvar produto:", error);
+        showModal("Não foi possível salvar o produto.");
+    }
+}
+
+// ==================== FUNÇÕES DE COMPATIBILIDADE MULTI-CATEGORIA ====================
+
+/**
+ * Verifica se produto tem uma categoria específica
+ * Compatível com formato antigo (category: string) e novo (categories: array)
+ * @param {object} produto - Objeto do produto
+ * @param {string} categoria - Categoria a verificar
+ * @returns {boolean} True se o produto pertence à categoria
+ */
+function hasCategory(produto, categoria) {
+    if (!produto) return false;
+
+    // Formato novo: categories (array) - prioridade
+    if (produto.categories && Array.isArray(produto.categories)) {
+        return produto.categories.includes(categoria);
+    }
+
+    // Formato antigo: category (string) - compatibilidade
+    if (produto.category && typeof produto.category === 'string') {
+        return produto.category === categoria;
+    }
+
+    return false;
+}
+
+/**
+ * Retorna todas as categorias de um produto como array
+ * @param {object} produto - Objeto do produto
+ * @returns {array} Array de categorias
+ */
+function getCategories(produto) {
+    if (!produto) return [];
+
+    // Formato novo: categories (array)
+    if (produto.categories && Array.isArray(produto.categories)) {
+        return produto.categories;
+    }
+
+    // Formato antigo: category (string) - converte para array
+    if (produto.category && typeof produto.category === 'string') {
+        return [produto.category];
+    }
+
+    return [];
+}
+
+/**
+ * Retorna label amigável das categorias do produto
+ * @param {object} produto - Objeto do produto
+ * @returns {string} String com as categorias formatadas
+ */
+function getCategoriesLabel(produto) {
+    const cats = getCategories(produto);
+    if (cats.length === 0) return 'Sem categoria';
+
+    const labels = {
+        'tamanho': 'Tamanho',
+        'fruta': 'Fruta',
+        'creme': 'Creme',
+        'outro': 'Outro',
+        'insumo': 'Insumo'
+    };
+
+    return cats.map(c => labels[c] || c).join(' + ');
 }
 
 function carregarProdutosAdmin() {
@@ -1348,7 +1511,17 @@ function carregarProdutosAdmin() {
         const container = document.getElementById('lista-produtos-admin');
         if (!container) return;
         const produtosPorCategoria = { tamanho: [], fruta: [], creme: [], outro: [], insumo: [] };
-        snapshot.docs.forEach(docSnap => { const p = { id: docSnap.id, ...docSnap.data() }; if (produtosPorCategoria[p.category]) produtosPorCategoria[p.category].push(p); });
+        snapshot.docs.forEach(docSnap => {
+            const p = { id: docSnap.id, ...docSnap.data() };
+            const cats = getCategories(p);
+
+            // Adiciona o produto em cada categoria que pertence
+            cats.forEach(cat => {
+                if (produtosPorCategoria[cat]) {
+                    produtosPorCategoria[cat].push(p);
+                }
+            });
+        });
         container.innerHTML = '';
 
         for (const categoria in produtosPorCategoria) {
@@ -1385,10 +1558,11 @@ function carregarProdutosAdmin() {
                             <div class="flex-grow">
                                 <h5 class="font-bold text-lg text-gray-800">${escapeHTML(p.name)}</h5>
                                 <p class="text-xs text-gray-500">${escapeHTML(p.unit)}</p>
+                                <p class="text-xs text-purple-600 font-medium">${getCategoriesLabel(p)}</p>
                             </div>
                             <div class="flex items-center gap-1">
-                                ${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1.5 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}" title="${isInactive ? 'Ativar' : 'Desativar'}">${isInactive ? '🚫' : '👁️'}</button>` : ''}
-                                ${p.category === 'tamanho' || (p.category !== 'insumo' && p.category !== 'tamanho') ? `<button class="recipe-btn p-1.5 text-green-500 hover:bg-green-50 rounded" data-id="${p.id}" title="Editar Receita">⚙️</button>` : ''}
+                                ${!hasCategory(p, 'tamanho') && !hasCategory(p, 'insumo') ? `<button class="toggle-active-btn p-1.5 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}" title="${isInactive ? 'Ativar' : 'Desativar'}">${isInactive ? '🚫' : '👁️'}</button>` : ''}
+                                ${hasCategory(p, 'tamanho') || (!hasCategory(p, 'insumo') && !hasCategory(p, 'tamanho')) ? `<button class="recipe-btn p-1.5 text-green-500 hover:bg-green-50 rounded" data-id="${p.id}" title="Editar Receita">⚙️</button>` : ''}
                                 <button class="edit-produto-btn p-1.5 text-blue-500 hover:bg-blue-50 rounded" data-id="${p.id}" title="Editar">✏️</button>
                                 <button class="delete-produto-btn p-1.5 text-red-500 hover:bg-red-50 rounded" data-id="${p.id}" title="Excluir">🗑️</button>
                             </div>
@@ -1396,7 +1570,7 @@ function carregarProdutosAdmin() {
                 `;
 
                 // Informações financeiras (apenas para não-insumos)
-                if (p.category !== 'insumo') {
+                if (!hasCategory(p, 'insumo') || getCategories(p).length > 1) {
                     cardHTML += `
                         <!-- Valores -->
                         <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
@@ -1412,7 +1586,7 @@ function carregarProdutosAdmin() {
                     `;
 
                     // Métricas (apenas para tamanhos)
-                    if (p.category === 'tamanho' && p.price > 0) {
+                    if (hasCategory(p, 'tamanho') && p.price > 0) {
                         cardHTML += `
                             <!-- Métricas de Lucro -->
                             <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg mb-3">
@@ -1442,8 +1616,8 @@ function carregarProdutosAdmin() {
                             `;
                         }
                     }
-                } else {
-                    // Para insumos, mostrar apenas custo
+                } else if (hasCategory(p, 'insumo') && getCategories(p).length === 1) {
+                    // Para insumos puros (sem outras categorias), mostrar apenas custo
                     cardHTML += `
                         <div class="bg-orange-50 p-2 rounded mb-3">
                             <p class="text-xs text-gray-600">💸 Custo por ${escapeHTML(p.unit)}</p>
@@ -1493,7 +1667,24 @@ function carregarProdutosAdmin() {
 
 function editarProduto(id) {
     const p = produtos.find(prod => prod.id === id);
-    if (p) { document.getElementById('produto-id').value = p.id; document.getElementById('produto-nome').value = p.name; document.getElementById('produto-preco').value = p.price; document.getElementById('produto-custo').value = p.cost; document.getElementById('produto-unidade').value = p.unit; document.getElementById('produto-icone').value = p.iconUrl; document.getElementById('produto-categoria').value = p.category; }
+    if (p) {
+        document.getElementById('produto-id').value = p.id;
+        document.getElementById('produto-nome').value = p.name;
+        document.getElementById('produto-preco').value = p.price;
+        document.getElementById('produto-custo').value = p.cost;
+        document.getElementById('produto-unidade').value = p.unit;
+        document.getElementById('produto-icone').value = p.iconUrl;
+
+        // Desmarcar todos os checkboxes primeiro
+        document.querySelectorAll('#produto-categorias input').forEach(cb => cb.checked = false);
+
+        // Marcar categorias do produto
+        const cats = getCategories(p);
+        cats.forEach(cat => {
+            const checkbox = document.querySelector(`#produto-categorias input[value="${cat}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+    }
 }
 
 function deletarProduto(id) {
@@ -1569,7 +1760,7 @@ function calcularCustoReceita(produto) {
 
     let custoTotal = 0;
     produto.recipe.forEach(ingrediente => {
-        const insumo = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
+        const insumo = produtos.find(p => p.name === ingrediente.name && hasCategory(p, 'insumo'));
         if (insumo) {
             custoTotal += (ingrediente.quantity || 0) * (insumo.cost || 0);
         }
@@ -1589,20 +1780,20 @@ function validarProduto(produto) {
 
     // Verificar se tem custo
     if (!produto.cost || produto.cost <= 0) {
-        if (produto.category === 'insumo') {
+        if (hasCategory(produto, 'insumo')) {
             alertas.push({ tipo: 'erro', mensagem: 'Insumo sem custo cadastrado' });
-        } else if (produto.category !== 'tamanho') {
+        } else if (!hasCategory(produto, 'tamanho')) {
             alertas.push({ tipo: 'aviso', mensagem: 'Produto sem custo definido' });
         }
     }
 
     // Verificar se tamanho tem receita
-    if (produto.category === 'tamanho' && (!produto.recipe || produto.recipe.length === 0)) {
+    if (hasCategory(produto, 'tamanho') && (!produto.recipe || produto.recipe.length === 0)) {
         alertas.push({ tipo: 'aviso', mensagem: 'Tamanho sem receita cadastrada' });
     }
 
     // Verificar margem de lucro
-    if (produto.category === 'tamanho' && produto.price > 0) {
+    if (hasCategory(produto, 'tamanho') && produto.price > 0) {
         const custo = calcularCustoReceita(produto);
         const margem = calcularMargem(produto.price, custo);
 
@@ -1657,10 +1848,10 @@ function playNotificationSound() {
 
 function calcularCustoPedido(venda) {
     let custoTotal = 0;
-    const tamanhoProduto = produtos.find(p => p.name === venda.tamanho && p.category === 'tamanho');
+    const tamanhoProduto = produtos.find(p => p.name === venda.tamanho && hasCategory(p, 'tamanho'));
     if (tamanhoProduto && tamanhoProduto.recipe) {
         tamanhoProduto.recipe.forEach(ingrediente => {
-            const insumoData = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
+            const insumoData = produtos.find(p => p.name === ingrediente.name && hasCategory(p, 'insumo'));
             if (insumoData) { custoTotal += (ingrediente.quantity || 0) * (insumoData.cost || 0); }
         });
     }
@@ -1877,7 +2068,7 @@ function openRecipeModal(id) {
     const produto = produtos.find(p => p.id === id);
     if (!produto) return;
 
-    const insumos = produtos.filter(p => p.category === 'insumo');
+    const insumos = produtos.filter(p => hasCategory(p, 'insumo'));
 
     if (insumos.length === 0) {
         showModal('⚠️ Nenhum insumo cadastrado! Por favor, cadastre insumos primeiro.');
