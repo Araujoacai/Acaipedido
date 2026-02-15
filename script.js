@@ -701,6 +701,42 @@ function renderDashboardAdmin() {
         </div>
     </div>
 
+    <!-- Novas Métricas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-gradient-to-br from-pink-50 to-pink-100 p-5 rounded-xl shadow-lg border border-pink-200">
+            <h4 class="text-sm font-semibold text-pink-700">💰 Ticket Médio (Hoje)</h4>
+            <p id="dashboard-ticket-medio" class="text-2xl font-bold text-pink-600">R$0,00</p>
+        </div>
+        <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-xl shadow-lg border border-orange-200">
+            <h4 class="text-sm font-semibold text-orange-700">📊 CMV (Hoje)</h4>
+            <p id="dashboard-cmv" class="text-2xl font-bold text-orange-600">R$0,00</p>
+            <p class="text-xs text-orange-500 mt-1">Custo de Mercadoria Vendida</p>
+        </div>
+        <div class="bg-gradient-to-br from-teal-50 to-teal-100 p-5 rounded-xl shadow-lg border border-teal-200">
+            <h4 class="text-sm font-semibold text-teal-700">📈 Lucro Bruto (Hoje)</h4>
+            <p id="dashboard-lucro-bruto" class="text-2xl font-bold text-teal-600">R$0,00</p>
+        </div>
+    </div>
+
+    <!-- Top Produtos -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h3 class="text-xl font-semibold mb-4 text-purple-700">🏆 Top 3 Mais Vendidos (Hoje)</h3>
+            <div id="dashboard-top-vendidos" class="space-y-2">
+                <p class="text-gray-500 text-sm">Carregando...</p>
+            </div>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-lg">
+            <h3 class="text-xl font-semibold mb-4 text-green-700">💎 Top 3 Mais Lucrativos (Hoje)</h3>
+            <div id="dashboard-top-lucrativos" class="space-y-2">
+                <p class="text-gray-500 text-sm">Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    <div id="dashboard-alertas" class="mb-6"></div>
+
     <div class="bg-white p-6 rounded-2xl shadow-lg">
         <h3 class="text-2xl font-semibold mb-4 text-purple-700">Pedidos Pendentes de Hoje</h3>
         <div class="overflow-x-auto">
@@ -723,7 +759,7 @@ function renderDashboardAdmin() {
         </div>
     </div>
     `;
-    carregarDashboardData(); // Chama a função para carregar os dados
+    carregarDashboardData();
 }
 
 /**
@@ -758,11 +794,22 @@ function carregarDashboardData() {
         const vendasHojeEl = document.getElementById('dashboard-vendas-hoje');
         const pendentesEl = document.getElementById('dashboard-pendentes');
         const totalPedidosEl = document.getElementById('dashboard-total-pedidos');
+        const ticketMedioEl = document.getElementById('dashboard-ticket-medio');
+        const cmvEl = document.getElementById('dashboard-cmv');
+        const lucroBrutoEl = document.getElementById('dashboard-lucro-bruto');
+        const topVendidosEl = document.getElementById('dashboard-top-vendidos');
+        const topLucrativosEl = document.getElementById('dashboard-top-lucrativos');
+        const alertasEl = document.getElementById('dashboard-alertas');
 
         if (!tableBody || !vendasHojeEl || !pendentesEl || !totalPedidosEl) return;
 
         let totalVendasHoje = 0;
         let pedidosPendentesCount = 0;
+        let totalCMV = 0;
+        const produtosVendidos = {};
+        const produtosLucro = {};
+        const alertasMargem = [];
+
         tableBody.innerHTML = ''; // Limpa a tabela para recarregar
 
         if (snapshot.empty) {
@@ -771,8 +818,39 @@ function carregarDashboardData() {
             snapshot.docs.forEach(docSnap => {
                 const venda = { id: docSnap.id, ...docSnap.data() };
                 const valorNumerico = parseFloat(venda.total.replace('R$', '').replace(',', '.'));
+
                 if (!isNaN(valorNumerico)) {
                     totalVendasHoje += valorNumerico;
+                }
+
+                // Calcular CMV e métricas por produto
+                if (!venda.pedidoCombo && venda.tamanho) {
+                    const { custoTotal } = calcularCustoPedido(venda);
+                    totalCMV += custoTotal;
+
+                    // Contabilizar vendidos
+                    if (!produtosVendidos[venda.tamanho]) {
+                        produtosVendidos[venda.tamanho] = { quantidade: 0, valor: 0 };
+                    }
+                    produtosVendidos[venda.tamanho].quantidade += venda.quantidade || 1;
+                    produtosVendidos[venda.tamanho].valor += valorNumerico;
+
+                    // Contabilizar lucro
+                    const lucro = valorNumerico - custoTotal;
+                    if (!produtosLucro[venda.tamanho]) {
+                        produtosLucro[venda.tamanho] = 0;
+                    }
+                    produtosLucro[venda.tamanho] += lucro;
+
+                    // Verificar margens baixas
+                    const margem = calcularMargem(valorNumerico, custoTotal);
+                    if (margem < 35) {
+                        alertasMargem.push({
+                            produto: venda.tamanho,
+                            margem: margem,
+                            pedidoId: venda.orderId
+                        });
+                    }
                 }
 
                 // Adiciona à tabela apenas se estiver pendente
@@ -807,6 +885,99 @@ function carregarDashboardData() {
         vendasHojeEl.innerText = `R$${totalVendasHoje.toFixed(2).replace('.', ',')}`;
         pendentesEl.innerText = pedidosPendentesCount;
         totalPedidosEl.innerText = snapshot.size; // Total de pedidos do dia
+
+        // Ticket médio
+        const ticketMedio = snapshot.size > 0 ? totalVendasHoje / snapshot.size : 0;
+        if (ticketMedioEl) ticketMedioEl.innerText = `R$${ticketMedio.toFixed(2).replace('.', ',')}`;
+
+        // CMV
+        if (cmvEl) cmvEl.innerText = `R$${totalCMV.toFixed(2).replace('.', ',')}`;
+
+        // Lucro Bruto
+        const lucroBruto = totalVendasHoje - totalCMV;
+        if (lucroBrutoEl) {
+            lucroBrutoEl.innerText = `R$${lucroBruto.toFixed(2).replace('.', ',')}`;
+        }
+
+        // Top 3 Vendidos
+        if (topVendidosEl) {
+            const topVendidos = Object.entries(produtosVendidos)
+                .sort((a, b) => b[1].quantidade - a[1].quantidade)
+                .slice(0, 3);
+
+            if (topVendidos.length > 0) {
+                let html = '';
+                topVendidos.forEach(([produto, dados], index) => {
+                    const medal = ['🥇', '🥈', '🥉'][index];
+                    html += `
+                        <div class="flex justify-between items-center p-2 bg-purple-50 rounded-lg">
+                            <div>
+                                <span class="text-lg">${medal}</span>
+                                <span class="font-semibold ml-2">${escapeHTML(produto)}</span>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-purple-700">${dados.quantidade} un</p>
+                                <p class="text-xs text-gray-600">R$${dados.valor.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                topVendidosEl.innerHTML = html;
+            } else {
+                topVendidosEl.innerHTML = '<p class="text-gray-500 text-sm">Nenhuma venda ainda</p>';
+            }
+        }
+
+        // Top 3 Lucrativos
+        if (topLucrativosEl) {
+            const topLucrativos = Object.entries(produtosLucro)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3);
+
+            if (topLucrativos.length > 0) {
+                let html = '';
+                topLucrativos.forEach(([produto, lucro], index) => {
+                    const medal = ['🥇', '🥈', '🥉'][index];
+                    html += `
+                        <div class="flex justify-between items-center p-2 bg-green-50 rounded-lg">
+                            <div>
+                                <span class="text-lg">${medal}</span>
+                                <span class="font-semibold ml-2">${escapeHTML(produto)}</span>
+                            </div>
+                            <p class="font-bold text-green-700">R$${lucro.toFixed(2)}</p>
+                        </div>
+                    `;
+                });
+                topLucrativosEl.innerHTML = html;
+            } else {
+                topLucrativosEl.innerHTML = '<p class="text-gray-500 text-sm">Nenhuma venda ainda</p>';
+            }
+        }
+
+        // Alertas de margem baixa
+        if (alertasEl && alertasMargem.length > 0) {
+            let alertasHTML = `
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                    <h4 class="font-bold text-yellow-800 mb-2">⚠️ Atenção: Produtos com Margem Baixa Vendidos Hoje</h4>
+                    <div class="space-y-1">
+            `;
+
+            alertasMargem.forEach(alerta => {
+                alertasHTML += `
+                    <p class="text-sm text-yellow-700">
+                        • Pedido <strong>${escapeHTML(alerta.pedidoId)}</strong> - ${escapeHTML(alerta.produto)} - Margem: <strong class="text-red-600">${alerta.margem.toFixed(1)}%</strong>
+                    </p>
+                `;
+            });
+
+            alertasHTML += `
+                    </div>
+                </div>
+            `;
+            alertasEl.innerHTML = alertasHTML;
+        } else if (alertasEl) {
+            alertasEl.innerHTML = '';
+        }
 
         // Re-associa os eventos aos botões da tabela (importante!)
         document.querySelectorAll('.confirm-venda-btn').forEach(btn => btn.addEventListener('click', e => confirmarVenda(e.currentTarget.dataset.id)));
@@ -1179,16 +1350,140 @@ function carregarProdutosAdmin() {
         const produtosPorCategoria = { tamanho: [], fruta: [], creme: [], outro: [], insumo: [] };
         snapshot.docs.forEach(docSnap => { const p = { id: docSnap.id, ...docSnap.data() }; if (produtosPorCategoria[p.category]) produtosPorCategoria[p.category].push(p); });
         container.innerHTML = '';
+
         for (const categoria in produtosPorCategoria) {
+            if (produtosPorCategoria[categoria].length === 0) continue;
+
             container.innerHTML += `<h4 class="text-xl font-medium mt-6 mb-2 capitalize text-purple-600">${categoria}s</h4>`;
             const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+
             produtosPorCategoria[categoria].forEach(p => {
                 const isInactive = p.isActive === false;
-                grid.innerHTML += `<div class="border border-gray-200 p-3 rounded-lg flex justify-between items-center ${isInactive ? 'opacity-50' : ''}"><div><p class="font-bold">${escapeHTML(p.name)}</p><p class="text-sm text-gray-600">Venda: R$${(p.price || 0).toFixed(2)} | Custo: R$${(p.cost || 0).toFixed(2)} / ${escapeHTML(p.unit)}</p></div><div class="flex items-center">${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}">${isInactive ? '🚫' : '👁️'}</button>` : ''}${p.category === 'tamanho' ? `<button class="recipe-btn p-1 text-green-500" data-id="${p.id}">⚙️</button>` : ''}<button class="edit-produto-btn p-1 text-blue-500" data-id="${p.id}">✏️</button><button class="delete-produto-btn p-1 text-red-500" data-id="${p.id}">🗑️</button></div></div>`;
+                const custo = calcularCustoReceita(p);
+                const margem = calcularMargem(p.price, custo);
+                const markup = calcularMarkup(p.price, custo);
+                const precoSugerido = sugerirPreco(custo, 40);
+                const alertas = validarProduto(p);
+
+                // Definir cor da margem
+                let margemClass = 'text-green-600';
+                let margemIcon = '✅';
+                if (margem < 30) {
+                    margemClass = 'text-red-600';
+                    margemIcon = '🔴';
+                } else if (margem < 35) {
+                    margemClass = 'text-yellow-600';
+                    margemIcon = '⚠️';
+                }
+
+                // Card com informações detalhadas
+                let cardHTML = `
+                    <div class="border ${isInactive ? 'border-gray-300 opacity-50' : 'border-purple-200'} p-4 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow">
+                        <!-- Cabeçalho -->
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-grow">
+                                <h5 class="font-bold text-lg text-gray-800">${escapeHTML(p.name)}</h5>
+                                <p class="text-xs text-gray-500">${escapeHTML(p.unit)}</p>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                ${p.category !== 'tamanho' && p.category !== 'insumo' ? `<button class="toggle-active-btn p-1.5 text-white rounded ${isInactive ? 'bg-gray-400' : 'bg-green-500'}" data-id="${p.id}" title="${isInactive ? 'Ativar' : 'Desativar'}">${isInactive ? '🚫' : '👁️'}</button>` : ''}
+                                ${p.category === 'tamanho' || (p.category !== 'insumo' && p.category !== 'tamanho') ? `<button class="recipe-btn p-1.5 text-green-500 hover:bg-green-50 rounded" data-id="${p.id}" title="Editar Receita">⚙️</button>` : ''}
+                                <button class="edit-produto-btn p-1.5 text-blue-500 hover:bg-blue-50 rounded" data-id="${p.id}" title="Editar">✏️</button>
+                                <button class="delete-produto-btn p-1.5 text-red-500 hover:bg-red-50 rounded" data-id="${p.id}" title="Excluir">🗑️</button>
+                            </div>
+                        </div>
+                `;
+
+                // Informações financeiras (apenas para não-insumos)
+                if (p.category !== 'insumo') {
+                    cardHTML += `
+                        <!-- Valores -->
+                        <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                            <div class="bg-blue-50 p-2 rounded">
+                                <p class="text-xs text-gray-600">💰 Venda</p>
+                                <p class="font-bold text-blue-700">R$ ${(p.price || 0).toFixed(2)}</p>
+                            </div>
+                            <div class="bg-red-50 p-2 rounded">
+                                <p class="text-xs text-gray-600">💸 Custo ${p.category === 'tamanho' && p.recipe && p.recipe.length > 0 ? '(calculado)' : ''}</p>
+                                <p class="font-bold text-red-700">R$ ${custo.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    `;
+
+                    // Métricas (apenas para tamanhos)
+                    if (p.category === 'tamanho' && p.price > 0) {
+                        cardHTML += `
+                            <!-- Métricas de Lucro -->
+                            <div class="bg-gradient-to-r from-purple-50 to-pink-50 p-3 rounded-lg mb-3">
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div>
+                                        <p class="text-xs text-gray-600">Lucro</p>
+                                        <p class="font-bold text-green-600">R$ ${(p.price - custo).toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-600">Margem ${margemIcon}</p>
+                                        <p class="font-bold ${margemClass}">${margem.toFixed(1)}%</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-600">Markup</p>
+                                        <p class="font-bold text-purple-600">${markup.toFixed(1)}%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Sugestão de preço se estiver abaixo da margem
+                        if (margem < 40) {
+                            cardHTML += `
+                                <div class="bg-yellow-50 border border-yellow-200 p-2 rounded text-xs mb-2">
+                                    <p class="text-yellow-800">💡 <strong>Sugestão:</strong> Para margem de 40%, preço ideal: <strong>R$ ${precoSugerido.toFixed(2)}</strong></p>
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    // Para insumos, mostrar apenas custo
+                    cardHTML += `
+                        <div class="bg-orange-50 p-2 rounded mb-3">
+                            <p class="text-xs text-gray-600">💸 Custo por ${escapeHTML(p.unit)}</p>
+                            <p class="font-bold text-orange-700">R$ ${(p.cost || 0).toFixed(2)}</p>
+                        </div>
+                    `;
+                }
+
+                // Alertas de validação
+                if (alertas.length > 0) {
+                    cardHTML += `<div class="space-y-1 mb-2">`;
+                    alertas.forEach(alerta => {
+                        const bgColor = alerta.tipo === 'erro' ? 'bg-red-50 border-red-200' : 'bg-yellow-50 border-yellow-200';
+                        const textColor = alerta.tipo === 'erro' ? 'text-red-700' : 'text-yellow-700';
+                        cardHTML += `
+                            <div class="${bgColor} border px-2 py-1 rounded text-xs ${textColor}">
+                                ${gerarIconeAlerta(alerta.tipo)} ${escapeHTML(alerta.mensagem)}
+                            </div>
+                        `;
+                    });
+                    cardHTML += `</div>`;
+                }
+
+                // Info da receita
+                if (p.recipe && p.recipe.length > 0) {
+                    cardHTML += `
+                        <div class="text-xs text-gray-500 mt-2">
+                            📋 Receita: ${p.recipe.length} ingrediente(s)
+                        </div>
+                    `;
+                }
+
+                cardHTML += `</div>`;
+                grid.innerHTML += cardHTML;
             });
+
             container.appendChild(grid);
         }
+
+        // Re-associar eventos
         document.querySelectorAll('.edit-produto-btn').forEach(btn => btn.addEventListener('click', (e) => editarProduto(e.currentTarget.dataset.id)));
         document.querySelectorAll('.delete-produto-btn').forEach(btn => btn.addEventListener('click', (e) => deletarProduto(e.currentTarget.dataset.id)));
         document.querySelectorAll('.recipe-btn').forEach(btn => btn.addEventListener('click', (e) => openRecipeModal(e.currentTarget.dataset.id)));
@@ -1225,6 +1520,123 @@ function showToast(message) {
     toast.innerText = message;
     toastContainer.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 5000);
+}
+
+// ==================== NOVAS FUNÇÕES DE CÁLCULO E VALIDAÇÃO ====================
+
+/**
+ * Calcula a margem de lucro percentual
+ * @param {number} precoVenda - Preço de venda
+ * @param {number} custo - Custo do produto
+ * @returns {number} Margem em porcentagem
+ */
+function calcularMargem(precoVenda, custo) {
+    if (!precoVenda || precoVenda <= 0) return 0;
+    return ((precoVenda - custo) / precoVenda) * 100;
+}
+
+/**
+ * Calcula o markup sobre o custo
+ * @param {number} precoVenda - Preço de venda
+ * @param {number} custo - Custo do produto
+ * @returns {number} Markup em porcentagem
+ */
+function calcularMarkup(precoVenda, custo) {
+    if (!custo || custo <= 0) return 0;
+    return ((precoVenda - custo) / custo) * 100;
+}
+
+/**
+ * Sugere preço de venda baseado em margem desejada
+ * @param {number} custo - Custo do produto
+ * @param {number} margemDesejada - Margem desejada em porcentagem (ex: 40 para 40%)
+ * @returns {number} Preço sugerido
+ */
+function sugerirPreco(custo, margemDesejada = 40) {
+    if (!custo || custo <= 0) return 0;
+    return custo / (1 - margemDesejada / 100);
+}
+
+/**
+ * Calcula o custo total de um produto com receita
+ * @param {object} produto - Objeto do produto
+ * @returns {number} Custo total calculado
+ */
+function calcularCustoReceita(produto) {
+    if (!produto.recipe || produto.recipe.length === 0) {
+        return produto.cost || 0;
+    }
+
+    let custoTotal = 0;
+    produto.recipe.forEach(ingrediente => {
+        const insumo = produtos.find(p => p.name === ingrediente.name && p.category === 'insumo');
+        if (insumo) {
+            custoTotal += (ingrediente.quantity || 0) * (insumo.cost || 0);
+        }
+    });
+
+    return custoTotal;
+}
+
+/**
+ * Valida se o produto tem configurações corretas
+ * @param {object} produto - Objeto do produto
+ * @returns {array} Array de alertas/warnings
+ */
+function validarProduto(produto) {
+    const alertas = [];
+    const MARGEM_MINIMA = 30; // Margem mínima aceitável
+
+    // Verificar se tem custo
+    if (!produto.cost || produto.cost <= 0) {
+        if (produto.category === 'insumo') {
+            alertas.push({ tipo: 'erro', mensagem: 'Insumo sem custo cadastrado' });
+        } else if (produto.category !== 'tamanho') {
+            alertas.push({ tipo: 'aviso', mensagem: 'Produto sem custo definido' });
+        }
+    }
+
+    // Verificar se tamanho tem receita
+    if (produto.category === 'tamanho' && (!produto.recipe || produto.recipe.length === 0)) {
+        alertas.push({ tipo: 'aviso', mensagem: 'Tamanho sem receita cadastrada' });
+    }
+
+    // Verificar margem de lucro
+    if (produto.category === 'tamanho' && produto.price > 0) {
+        const custo = calcularCustoReceita(produto);
+        const margem = calcularMargem(produto.price, custo);
+
+        if (margem < MARGEM_MINIMA) {
+            alertas.push({ tipo: 'erro', mensagem: `Margem muito baixa (${margem.toFixed(1)}%)` });
+        } else if (margem < 35) {
+            alertas.push({ tipo: 'aviso', mensagem: `Margem abaixo do ideal (${margem.toFixed(1)}%)` });
+        }
+    }
+
+    // Verificar se preço é menor que custo
+    if (produto.price > 0 && produto.price < produto.cost) {
+        alertas.push({ tipo: 'erro', mensagem: 'Preço menor que custo!' });
+    }
+
+    return alertas;
+}
+
+/**
+ * Gera ícone de alerta baseado no tipo
+ * @param {string} tipo - 'erro', 'aviso', ou 'info'
+ * @returns {string} HTML do ícone
+ */
+function gerarIconeAlerta(tipo) {
+    switch (tipo) {
+        case 'erro':
+            return '🔴';
+        case 'aviso':
+            return '⚠️';
+        case 'info':
+            return 'ℹ️';
+        default:
+            return '📌';
+    }
 }
 
 function playNotificationSound() {
@@ -1462,13 +1874,128 @@ function checkStoreOpen() {
 }
 
 function openRecipeModal(id) {
-    const produtoTamanho = produtos.find(p => p.id === id); if (!produtoTamanho) return;
+    const produto = produtos.find(p => p.id === id);
+    if (!produto) return;
+
     const insumos = produtos.filter(p => p.category === 'insumo');
+
+    if (insumos.length === 0) {
+        showModal('⚠️ Nenhum insumo cadastrado! Por favor, cadastre insumos primeiro.');
+        return;
+    }
+
+    // Inicializar receita se não existir
+    if (!produto.recipe) {
+        produto.recipe = [];
+    }
+
     let insumosHTML = insumos.map(insumo => {
-        const itemReceita = produtoTamanho.recipe?.find(r => r.name === insumo.name);
-        return `<div class="flex justify-between items-center mb-2"><label for="recipe-${insumo.id}">${insumo.name} (${insumo.unit})</label><input type="number" id="recipe-${insumo.id}" data-name="${insumo.name}" value="${itemReceita ? itemReceita.quantity : 0}" class="w-24 p-1 border rounded text-center bg-gray-100 border-gray-300" placeholder="Qtd."></div>`;
+        const itemReceita = produto.recipe?.find(r => r.name === insumo.name);
+        const quantidade = itemReceita ? itemReceita.quantity : 0;
+
+        return `
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-gray-100">
+                <div class="flex-grow">
+                    <label for="recipe-${insumo.id}" class="font-medium text-gray-700">${insumo.name}</label>
+                    <p class="text-xs text-gray-500">Custo: R$ ${(insumo.cost || 0).toFixed(2)} / ${insumo.unit}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input 
+                        type="number" 
+                        id="recipe-${insumo.id}" 
+                        data-name="${insumo.name}"
+                        data-cost="${insumo.cost || 0}"
+                        value="${quantidade}" 
+                        class="w-20 p-2 border rounded text-center bg-gray-50 border-gray-300 recipe-input" 
+                        placeholder="0"
+                        step="0.01"
+                        min="0"
+                    >
+                    <span class="text-xs text-gray-500 w-10">${insumo.unit}</span>
+                </div>
+            </div>
+        `;
     }).join('');
-    showModal(`<div class="text-left"><h3 class="text-xl font-bold mb-4 text-purple-700">Ficha Técnica para ${produtoTamanho.name}</h3><div id="recipe-form" class="max-h-96 overflow-y-auto p-2">${insumosHTML}</div><div class="mt-6 text-right"><button id="save-recipe-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg">Salvar Receita</button><button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg ml-2">Cancelar</button></div></div>`, () => {
+
+    const tituloModal = produto.category === 'tamanho'
+        ? `Ficha Técnica - ${produto.name}`
+        : `Receita/Composição - ${produto.name}`;
+
+    const descricaoModal = produto.category === 'tamanho'
+        ? 'Defina os insumos utilizados para preparar este tamanho de açaí'
+        : 'Defina os insumos necessários para este item (opcional)';
+
+    showModal(`
+        <div class="text-left max-h-96 overflow-y-auto">
+            <h3 class="text-xl font-bold mb-2 text-purple-700">${tituloModal}</h3>
+            <p class="text-sm text-gray-600 mb-4">${descricaoModal}</p>
+            
+            <!-- Calculadora de Custo em Tempo Real -->
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg mb-4">
+                <p class="text-sm font-semibold text-gray-700 mb-1">💰 Custo Total Calculado:</p>
+                <p id="custo-total-receita" class="text-2xl font-bold text-purple-700">R$ 0,00</p>
+                <p class="text-xs text-gray-600 mt-1">
+                    Preço atual: <strong>R$ ${(produto.price || 0).toFixed(2)}</strong> | 
+                    <span id="margem-receita">Margem: --</span>
+                </p>
+            </div>
+            
+            <div id="recipe-form" class="space-y-1">
+                ${insumosHTML}
+            </div>
+            
+            <div class="mt-6 flex gap-2 justify-end sticky bottom-0 bg-white pt-3">
+                <button onclick="window.closeModal()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">
+                    Cancelar
+                </button>
+                <button id="save-recipe-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 transition font-semibold">
+                    💾 Salvar Receita
+                </button>
+            </div>
+        </div>
+    `, () => {
+        // Função para atualizar custo em tempo real
+        function atualizarCustoTotal() {
+            let custoTotal = 0;
+            document.querySelectorAll('.recipe-input').forEach(input => {
+                const quantidade = parseFloat(input.value) || 0;
+                const custo = parseFloat(input.dataset.cost) || 0;
+                custoTotal += quantidade * custo;
+            });
+
+            const custoEl = document.getElementById('custo-total-receita');
+            const margemEl = document.getElementById('margem-receita');
+
+            if (custoEl) {
+                custoEl.textContent = `R$ ${custoTotal.toFixed(2)}`;
+            }
+
+            if (margemEl && produto.price > 0) {
+                const margem = calcularMargem(produto.price, custoTotal);
+                let margemClass = 'text-green-600';
+                let margemIcon = '✅';
+
+                if (margem < 30) {
+                    margemClass = 'text-red-600';
+                    margemIcon = '🔴';
+                } else if (margem < 35) {
+                    margemClass = 'text-yellow-600';
+                    margemIcon = '⚠️';
+                }
+
+                margemEl.innerHTML = `<span class="${margemClass}">Margem: ${margem.toFixed(1)}% ${margemIcon}</span>`;
+            }
+        }
+
+        // Adicionar evento de input para atualização em tempo real
+        document.querySelectorAll('.recipe-input').forEach(input => {
+            input.addEventListener('input', atualizarCustoTotal);
+        });
+
+        // Calcular custo inicial
+        atualizarCustoTotal();
+
+        // Evento de salvar
         document.getElementById('save-recipe-btn').addEventListener('click', () => salvarReceita(id));
     });
 }
